@@ -4,6 +4,7 @@ extern crate sprs;
 
 
 pub mod lsqr;
+pub mod bicgstab;
 
 
 

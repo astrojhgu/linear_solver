@@ -12,6 +12,7 @@ where
     (x.dot(x)).sqrt()
 }
 
+#[derive(Clone)]
 pub struct LsqrState<T>
 where
     T: Float + Copy + Default + ScalarOperand,
@@ -43,17 +44,15 @@ where
     result
 }
 
-pub fn lsqr_iter<T, IptrStorage, IndStorage, DataStorage>(A: &sprs::CsMatBase<T, usize, IptrStorage, IndStorage, DataStorage>, s_last: &LsqrState<T>) -> LsqrState<T>
+pub fn lsqr_iter<T>(fl: &dyn Fn(&Array1<T>)->Array1<T>, fr: &dyn Fn(&Array1<T>)->Array1<T>, s_last: &LsqrState<T>) -> LsqrState<T>
 where
-    T: Float + Copy + Default + ScalarOperand,
-    IptrStorage: std::ops::Deref<Target= [usize]>,
-    IndStorage: std::ops::Deref<Target = [usize]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
+    T: Float + Copy + Default + ScalarOperand+std::fmt::Debug,
 {
-    let rhs_beta = sp_mul_a1(A, &s_last.v) - (&s_last.u) * (s_last.alpha);
+    let rhs_beta = fl(&s_last.v) - (&s_last.u) * (s_last.alpha);
     let beta = eculid_norm(&rhs_beta);
     let u = rhs_beta / beta;
-    let rhs_alpha = sp_mul_a1(&A.transpose_view(), &u) - (&s_last.v) * beta;
+    //let rhs_alpha = sp_mul_a1(&A.transpose_view(), &u) - (&s_last.v) * beta;
+    let rhs_alpha = fr(&u) - (&s_last.v) * beta;
     let alpha = eculid_norm(&rhs_alpha);
     let v = &rhs_alpha / alpha;
     let rho = (s_last.rho_bar.powi(2) + beta.powi(2)).sqrt();
@@ -78,17 +77,15 @@ where
 }
 
 #[allow(non_snake_case)]
-pub fn lsqr_init<T, IptrStorage, IndStorage, DataStorage >(A: &sprs::CsMatBase<T, usize, IptrStorage, IndStorage, DataStorage>, b: &Array1<T>) -> LsqrState<T>
+pub fn lsqr_init<T>(fr: &dyn Fn(&Array1<T>)->Array1<T>, ncols: usize, b: &Array1<T>) -> LsqrState<T>
 where
     T: Float + Copy + Default + ScalarOperand,
-    IptrStorage: std::ops::Deref<Target= [usize]>,
-    IndStorage: std::ops::Deref<Target = [usize]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
 {
-    let x0 = Array1::from(vec![<T as Default>::default(); A.cols()]);
+    //assert!(ncols<b.len());
+    let x0 = Array1::from(vec![<T as Default>::default(); ncols]);
     let beta = eculid_norm(&b);
     let u = (b) / beta;
-    let ATu = sp_mul_a1(&A.transpose_view(), &u);
+    let ATu = fr(&u);
     let alpha = eculid_norm(&ATu);
     let v = ATu / alpha;
     let w = v.clone();
@@ -107,31 +104,21 @@ where
 
 impl<T> LsqrState<T>
 where
-    T: Float + Copy + Default + ScalarOperand,
+    T: Float + Copy + Default + ScalarOperand+ std::fmt::Debug,
 {
-    pub fn new<IptrStorage, IndStorage, DataStorage>(A: &sprs::CsMatBase<T, usize, IptrStorage, IndStorage, DataStorage>, b: &Array1<T>) -> LsqrState<T> 
-    where IptrStorage: std::ops::Deref<Target= [usize]>,
-    IndStorage: std::ops::Deref<Target = [usize]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
+    pub fn new(fr: &dyn Fn(&Array1<T>)->Array1<T>,ncols: usize,  b: &Array1<T>) -> LsqrState<T> 
     {
-        lsqr_init(A, b)
+        lsqr_init(fr, ncols,  b)
     }
 
-    pub fn next<IptrStorage, IndStorage, DataStorage>(&mut self, A: &sprs::CsMatBase<T, usize, IptrStorage, IndStorage, DataStorage>) 
-    where IptrStorage: std::ops::Deref<Target= [usize]>,
-    IndStorage: std::ops::Deref<Target = [usize]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
-
+    pub fn next(&mut self, fl: &dyn Fn(&Array1<T>)->Array1<T>, fr: &dyn Fn(&Array1<T>)->Array1<T>) 
     {
-        let ls = lsqr_iter(A, self);
+        let ls = lsqr_iter(fl, fr, self);
         *self = ls;
     }
 
-    pub fn calc_resid<IptrStorage, IndStorage, DataStorage>(&self, A: &sprs::CsMatBase<T, usize, IptrStorage, IndStorage, DataStorage>, b: &Array1<T>)->Array1<T>
-    where IptrStorage: std::ops::Deref<Target= [usize]>,
-    IndStorage: std::ops::Deref<Target = [usize]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
+    pub fn calc_resid(&self, fl: &dyn Fn(&Array1<T>)->Array1<T>, b: &Array1<T>)->Array1<T>
     {
-        &sp_mul_a1(A, &self.x)-b
+        b-&fl(&self.x)
     }
 }
