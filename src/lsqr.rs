@@ -111,14 +111,30 @@ where
         lsqr_init(fr, ncols,  b)
     }
 
-    pub fn next(&mut self, fl: &dyn Fn(&Array1<T>)->Array1<T>, fr: &dyn Fn(&Array1<T>)->Array1<T>) 
+    pub fn next(&mut self, fl: &dyn Fn(&Array1<T>)->Array1<T>, fr: &dyn Fn(&Array1<T>)->Array1<T>)->Option<()> 
     {
-        let ls = lsqr_iter(fl, fr, self);
-        *self = ls;
+        let ns = lsqr_iter(fl, fr, self);
+        println!("{}", ns.valid());
+        if ns.valid(){
+            *self = ns;
+            Some(())
+        }else{
+            None
+        }
     }
 
     pub fn calc_resid(&self, fl: &dyn Fn(&Array1<T>)->Array1<T>, b: &Array1<T>)->Array1<T>
     {
         b-&fl(&self.x)
+    }
+
+    pub fn valid(&self)->bool{
+        self.x.iter().all(|x|{x.is_finite()})&&
+        self.alpha.is_finite()&&
+        self.u.iter().all(|x| x.is_finite()) &&
+        self.v.iter().all(|x| x.is_finite()) &&
+        self.w.iter().all(|x| x.is_finite()) &&
+        self.phi_bar.is_finite()&&
+        self.rho_bar.is_finite()
     }
 }

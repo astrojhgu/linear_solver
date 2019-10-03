@@ -72,8 +72,14 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
         }
     }
 
-    pub fn next(&mut self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, th: T){
-        *self=bicgstab_iter(lhs, self, th)
+    pub fn next(&mut self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, th: T)->std::option::Option<()>{
+        let ns=bicgstab_iter(lhs, self, th);
+        if ns.valid(){
+            *self=ns;
+            Option::Some(())
+        }else{
+            Option::None
+        }
     }
 
     pub fn calc_resid(&self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, b:&Array1<T>)->Array1<T>{
@@ -83,5 +89,12 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
     pub fn converged(&self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, b:&Array1<T>, th: T)->bool{
         let res=self.calc_resid(lhs, b);
         res.dot(&res)<th*th
+    }
+
+    pub fn valid(&self)->bool{
+        self.res.iter().all(|x|{x.is_finite()}) &&
+        self.res_prime.iter().all(|x|{x.is_finite()}) &&
+        self.p.iter().all(|x|{x.is_finite()}) && 
+        self.x.iter().all(|x|{x.is_finite()})
     }
 }

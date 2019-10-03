@@ -27,11 +27,15 @@ fn main() {
 
     while !aa.converged(&|x|{
         sp_mul_a1(&a, x)
-    }, &b, 1e-15){
+    }, &b, 1e-25){
 
-    aa.next(&|x|{
+    if let Some(_)=aa.next(&|x|{
         sp_mul_a1(&a, x)
-    }, 1e-10);
+    }, 1e-10){
+        
+    }else{
+        break;
+    }
 
     println!("{:?}", aa.x);
     }
