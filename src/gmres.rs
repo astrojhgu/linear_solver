@@ -1,5 +1,6 @@
+#![allow(clippy::deref_addrof)] 
 #![allow(non_snake_case)]
-
+#![allow(clippy::many_single_char_names)]
 use ndarray::{Array1, Array2, ArrayView2, ArrayView1, s};
 use ndarray::ScalarOperand;
 use num_traits::Float;
@@ -85,8 +86,14 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
 pub fn gmres<T>(A: &dyn Fn(&ArrayView1<T>)->Array1<T>, b: &Array1<T>, mut x: Array1<T>, restart: usize, tol: T, max_iter: usize)->Array1<T>
 where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
 {
+    let restart=if restart >b.len(){
+        b.len()
+    }else{
+        restart
+    };
+    assert!(b.len()==x.len());
     let n=b.len();
-    for iter in 0..max_iter{
+    for _iter in 0..max_iter{
         for m in 0..restart{
             //println!("======iter={} m={}=======", iter, m);
             let (beta, v1)=init(A, &x.view(), b);
@@ -104,5 +111,5 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
             }
         }
     }
-    return x;
+    x
 }

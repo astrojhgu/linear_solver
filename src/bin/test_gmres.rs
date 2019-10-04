@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 extern crate sparse_solver;
 extern crate ndarray;
 extern crate sprs;

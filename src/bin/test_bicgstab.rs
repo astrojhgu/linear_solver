@@ -29,11 +29,11 @@ fn main() {
         sp_mul_a1(&a, x)
     }, &b, 1e-25){
 
-    if let Some(_)=aa.next(&|x|{
+    let result=aa.next(&|x|{
         sp_mul_a1(&a, x)
-    }, 1e-10){
-        
-    }else{
+    }, 1e-10);
+    
+    if result.is_none(){
         break;
     }
 
