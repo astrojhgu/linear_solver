@@ -16,7 +16,7 @@ fn main() {
         vec![0, 1, 2, 3, 0, 1, 2, 3, 0, 1],
         vec![1.; 10],
     );
-    let b = sp_mul_a1(&a, &x0);
+    let b = sp_mul_a1(&a, &x0.view());
     println!("{:?}", b);
     println!("{}", (x0.dot(&x0)).sqrt());
 
@@ -26,10 +26,10 @@ fn main() {
     for _i in 0..5 {
         aa.next(
             &|x|{
-                sp_mul_a1(&a, &x)
+                sp_mul_a1(&a, &x.view())
             },
             &|x|{
-                sp_mul_a1(&a.transpose_view(), &x)
+                sp_mul_a1(&a.transpose_view(), &x.view())
             }
         );
         println!("{:?}", aa.x);

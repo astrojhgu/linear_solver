@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(clippy::many_single_char_names)]
 
-use ndarray::Array1;
+use ndarray::{Array1, ArrayView1};
 use ndarray::ScalarOperand;
 use num_traits::Float;
 
@@ -16,14 +16,14 @@ T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
     pub x: Array1<T>,
 }
 
-pub fn bicgstab_iter<T>(lhs: &dyn Fn(&Array1<T>)->Array1<T>, s_last: &BiCGStabState<T>, th: T) -> BiCGStabState<T>
+pub fn bicgstab_iter<T>(lhs: &dyn Fn(&ArrayView1<T>)->Array1<T>, s_last: &BiCGStabState<T>, th: T) -> BiCGStabState<T>
     where T: Float + Copy + Default + ScalarOperand+ std::fmt::Debug,
 {
-    let ap=lhs(&s_last.p);
+    let ap=lhs(&s_last.p.view());
 
     let alpha=s_last.res.dot(&s_last.res_prime)/(ap.dot(&s_last.res_prime));
     let s=(&s_last.res)-&((&ap)*alpha);
-    let a_s=lhs(&s);
+    let a_s=lhs(&s.view());
     let a_s_norm=a_s.dot(&a_s);
     let w=if a_s_norm == T::zero(){
         T::one()
@@ -59,9 +59,9 @@ pub fn bicgstab_iter<T>(lhs: &dyn Fn(&Array1<T>)->Array1<T>, s_last: &BiCGStabSt
 impl<T> BiCGStabState<T>
 where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
 {
-    pub fn new(lhs: &dyn Fn(&Array1<T>)->Array1<T>, x: Array1<T>, b: Array1<T>, )->BiCGStabState<T>{
+    pub fn new(lhs: &dyn Fn(&ArrayView1<T>)->Array1<T>, x: Array1<T>, b: Array1<T>, )->BiCGStabState<T>{
         assert!(x.len()==b.len());
-        let res=&b-&lhs(&x);
+        let res=&b-&lhs(&x.view());
         let res_prime=res.clone();
         let p=res.clone();
         BiCGStabState{
@@ -72,7 +72,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
         }
     }
 
-    pub fn next(&mut self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, th: T)->std::option::Option<()>{
+    pub fn next(&mut self, lhs: &dyn Fn(&ArrayView1<T>)->Array1<T>, th: T)->std::option::Option<()>{
         let ns=bicgstab_iter(lhs, self, th);
         if ns.valid(){
             *self=ns;
@@ -82,11 +82,11 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
         }
     }
 
-    pub fn calc_resid(&self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, b:&Array1<T>)->Array1<T>{
-        b-&lhs(&self.x)
+    pub fn calc_resid(&self, lhs: &dyn Fn(&ArrayView1<T>)->Array1<T>, b:&Array1<T>)->Array1<T>{
+        b-&lhs(&self.x.view())
     }
 
-    pub fn converged(&self, lhs: &dyn Fn(&Array1<T>)->Array1<T>, b:&Array1<T>, th: T)->bool{
+    pub fn converged(&self, lhs: &dyn Fn(&ArrayView1<T>)->Array1<T>, b:&Array1<T>, th: T)->bool{
         let res=self.calc_resid(lhs, b);
         res.dot(&res)<th*th
     }

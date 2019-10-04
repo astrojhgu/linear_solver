@@ -17,7 +17,7 @@ fn main() {
         vec![1.0, 1.0, -1.0, 1.0],
     );
 
-    let b = sp_mul_a1(&a, &x0);
+    let b = sp_mul_a1(&a, &x0.view());
     
     let mut aa = lsqr_init(&|x|{
         sp_mul_a1(&a.transpose_view(), &x)
