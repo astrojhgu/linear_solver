@@ -13,7 +13,7 @@ T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
     w.dot(&w)/v2.dot(v2)
 }
 
-pub fn init<T>(A: &dyn Fn(&ArrayView1<T>)->Array1<T>, x: &ArrayView1<T>, b: &Array1<T>)->(T, Array1<T>)
+pub fn init<T>(A: &dyn Fn(ArrayView1<T>)->Array1<T>, x: ArrayView1<T>, b: &Array1<T>)->(T, Array1<T>)
 where 
 T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
     let r=b-&A(x);
@@ -22,7 +22,7 @@ T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
     (beta, v1)
 }
 
-pub fn solve_u<T>(U: &ArrayView2<T>, mut x: Array1<T>)->Array1<T>
+pub fn solve_u<T>(U: ArrayView2<T>, mut x: Array1<T>)->Array1<T>
 where
 T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
 {
@@ -58,17 +58,17 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
     }
     //println!("Hess1={:?}", Hess);
     //println!("b1={:?}", b);
-    solve_u(&Hess.slice(s![0..m, 0..m]), b.slice(s![0..m]).to_owned())
+    solve_u(Hess.slice(s![0..m, 0..m]), b.slice(s![0..m]).to_owned())
 }
 
-pub fn hessenberg<T>(A: &dyn Fn(&ArrayView1<T>)->Array1<T>, v1: &Array1<T>, n: usize, m: usize)->(Array2<T>, Array2<T>)
+pub fn hessenberg<T>(A: &dyn Fn(ArrayView1<T>)->Array1<T>, v1: &Array1<T>, n: usize, m: usize)->(Array2<T>, Array2<T>)
 where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
 {
     let mut Hess=Array2::<T>::zeros((m+2, m+1));
     let mut Vm=Array2::<T>::zeros((n, m+1));
     Vm.column_mut(0).assign(v1);
     for j in 0..=m{
-        let mut w=A(&Vm.column(j));
+        let mut w=A(Vm.column(j));
         for i in 0..=j{
             Hess[(i,j)]=w.dot(&Vm.column(i));
             w=w-&Vm.column(i)*Hess[(i,j)];
@@ -83,7 +83,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
     (Hess.slice(s![0..=m+1, 0..=m]).to_owned(), Vm.slice(s![.., 0..=m]).to_owned())
 }
 
-pub fn gmres<T>(A: &dyn Fn(&ArrayView1<T>)->Array1<T>, b: &Array1<T>, mut x: Array1<T>, restart: usize, tol: T, max_iter: usize)->Array1<T>
+pub fn gmres<T>(A: &dyn Fn(ArrayView1<T>)->Array1<T>, b: &Array1<T>, mut x: Array1<T>, restart: usize, tol: T, max_iter: usize)->Array1<T>
 where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
 {
     let restart=if restart >b.len(){
@@ -96,7 +96,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
     for _iter in 0..max_iter{
         for m in 0..restart{
             //println!("======iter={} m={}=======", iter, m);
-            let (beta, v1)=init(A, &x.view(), b);
+            let (beta, v1)=init(A, x.view(), b);
             //println!("beta={:?}", beta);
             //println!("v1={:?}", v1);
             let (mut Hess, Vm)=hessenberg(A, &v1, n, m);
@@ -105,7 +105,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug,
             let y = least_square(&mut Hess, beta);
             //println!("y={:?}", y);
             x=&x+&(Vm.dot(&y));
-            let res=b-&A(&x.view());
+            let res=b-&A(x.view());
             if res.dot(&res)<tol*tol{
                 return x;
             }

@@ -1,9 +1,9 @@
-extern crate sparse_solver;
+extern crate linear_solver;
 extern crate ndarray;
 extern crate sprs;
 
-use sparse_solver::bicgstab::BiCGStabState;
-use sparse_solver::lsqr::sp_mul_a1;
+use linear_solver::bicgstab::BiCGStabState;
+use linear_solver::lsqr::sp_mul_a1;
 use ndarray::Array1;
 
 fn main() {

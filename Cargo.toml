@@ -1,5 +1,5 @@
 [package]
-name = "sparse_solver"
+name = "linear_solver"
 version = "0.1.0"
 authors = ["Gu Junhua <jhgu@nao.cas.cn>"]
 edition = "2018"
@@ -10,3 +10,4 @@ edition = "2018"
 ndarray = '0.13.0'
 num-traits = '0.2.8'
 sprs = '0.6.5'
+num-complex = '0.2.3'

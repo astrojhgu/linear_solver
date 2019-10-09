@@ -4,8 +4,8 @@ extern crate linear_solver;
 extern crate ndarray;
 extern crate sprs;
 
-use ndarray::{array};
-use linear_solver::gmres::gmres;
+use ndarray::{array, ArrayView1};
+use linear_solver::agmres::agmres;
 use linear_solver::lsqr::sp_mul_a1;
 use ndarray::Array1;
 
@@ -17,8 +17,17 @@ fn main() {
     let b=a.dot(&x0);
     println!("{:?}", b);
 
-    let x=gmres(&|x|{
+    let A=|x: ArrayView1<f64>|->Array1<f64>{
         a.dot(&x.to_owned())
-    }, &b, Array1::<f64>::from(vec![2., 2., 3.]), 2, 1e-8, 100);
+    };
+    let mut x=Array1::<f64>::from(vec![1., 1., 1.]);
+    let M=|x: ArrayView1<f64>|->Array1<f64>{x.to_owned()};
+    let mut tol=1e-10;
+    let mut atol=1e-12;
+
+    let r=agmres(&A, &mut x, b.view(), &M, 100, 3, 1, 1, 0.4, &mut tol, &mut atol);
+    println!("{}", r);
+
     println!("{:?}", x);
+
 }
