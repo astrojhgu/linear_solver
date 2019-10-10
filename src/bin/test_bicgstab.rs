@@ -22,15 +22,15 @@ fn main() {
     println!("{}", (x0.dot(&x0)).sqrt());
 
     let mut aa=BiCGStabState::new(&|x|{
-        sp_mul_a1(&a, x)
+        sp_mul_a1(&a, x.view())
     }, Array1::from(vec![1.,1.]), b.clone());
 
     while !aa.converged(&|x|{
-        sp_mul_a1(&a, x)
+        sp_mul_a1(&a, x.view())
     }, &b, 1e-25){
 
     let result=aa.next(&|x|{
-        sp_mul_a1(&a, x)
+        sp_mul_a1(&a, x.view())
     }, 1e-10);
     
     if result.is_none(){
