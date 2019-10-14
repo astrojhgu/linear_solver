@@ -6,7 +6,7 @@ extern crate sprs;
 
 use ndarray::{array};
 use linear_solver::gmres::gmres;
-use linear_solver::lsqr::sp_mul_a1;
+use linear_solver::utils::sp_mul_a1;
 use ndarray::Array1;
 
 fn main() {

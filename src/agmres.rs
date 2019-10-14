@@ -65,8 +65,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
     let mut s=Array1::<T>::zeros(m+1);
     let mut cs=Array1::<T>::zeros(m+1);
     let mut sn=Array1::<T>::zeros(m+1);
-    let av=Array1::<T>::zeros(n);
-
+    let mut av=Array1::<T>::zeros(n);
     let mut r1=T::zero();
     //println!("b={:?}", b);
     let mut w=M(b.view());
@@ -80,14 +79,14 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
         }
     };
     //println!("normb={:?}", normb);
-    let r=A(x.view());
+    let mut r=A(x.view());
     //println!("r={:?}", r);
-    let w=&b-&r;
+    w=&b-&r;
     //println!("w={:?}", w);
-    let r=M(w.view());
-    let beta=norm(&r.view());
+    r=M(w.view());
+    let mut beta=norm(&r.view());
 
-    let resid=beta/normb;
+    let mut resid=beta/normb;
     //println!("resid={:?}", resid);
 
     if resid.powi(2)<=*tol{
@@ -115,8 +114,8 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
 
         let mut i=0;
         while i< m && j<=max_iter{
-            let av=A(v[i].view());
-            let mut w=M(av.view());
+            av=A(v[i].view());
+            w=M(av.view());
             for k in 0..=i{
                 H[(k, i)]=w.dot(&v[k]);
                 w=(&w)-&(&v[k]*H[(k,i)]);
@@ -150,7 +149,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
             //println!("sn={:?}", sn);
             //std::process::exit(0);
 
-            let resid=s[i+1].abs();
+            resid=s[i+1].abs();
             if resid.powi(2)<*tol{
                 //println!("resid={:?}, {:?}", resid, tol);
                 update(x, i, &H, &s, &v[..]);
@@ -160,10 +159,10 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
             i+=1;
         }
         update(x, i-1, &H, &s, &v[..]);
-        let r=A(x.view());
-        let w=&b-&r;
-        let r=M(w.view());
-        let beta=norm(&r.view());
+        r=A(x.view());
+        w=&b-&r;
+        r=M(w.view());
+        beta=norm(&r.view());
         if resid.powi(2)<*tol{
             *tol=resid.powi(2);
             return 0;

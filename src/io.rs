@@ -1,9 +1,9 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 use sprs::CsMat;
-use num_complex::Complex64;
-
+use num_complex::{Complex64, Complex};
+use num_traits::Num;
 pub enum MM{
     SparseReal(CsMat<f64>),
     DenseReal(Array2<f64>),
@@ -11,8 +11,14 @@ pub enum MM{
     DenseComplex(Array2<Complex64>),
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Storage{
+    Dense,
+    Sparse
+}
 
-#[derive(Debug)]
+
+#[derive(Debug, Clone, Copy)]
 pub enum Qualifier{
     General,
     Symmetric,
@@ -20,89 +26,283 @@ pub enum Qualifier{
     Hermitian,
 }
 
-#[derive(Debug)]
+
+impl Qualifier{
+    pub fn expand_items<T>(&self, e: &RawEntry<T>)->Vec<RawEntry<T>>
+    where T: Num+Copy+std::fmt::Debug{
+        if e.i==e.j{
+                vec![*e]
+            }
+        else{
+            match self{
+                Qualifier::General=>{
+                    vec![*e]
+                }
+                Qualifier::Symmetric=>{
+                    vec![*e, e.symm()]
+                }
+                Qualifier::SkewSymmetric=>{
+                    vec![*e, e.skewsymm()]
+                }
+                Qualifier::Hermitian=>{
+                    unimplemented!()
+                    //vec![e.hermit()]
+                }
+            }
+        }
+    }
+}
+
+
+#[derive(Debug, Clone, Copy)]
 pub enum Format{
     Array,
     Coordinate,
 }
 
-#[derive(Debug)]
-pub enum MatrixValue{
-    Real(f64),
-    Complex(Complex64),
-}
-
-#[derive(Debug)]
-pub struct RawEntry{
+#[derive(Debug, Clone, Copy)]
+pub struct RawEntry<T>
+where T: Num+Copy+std::fmt::Debug
+{
     i: usize,
     j: usize,
-    value: MatrixValue,
+    value: T,
+}
+
+
+impl<T> RawEntry<T>
+where T: Num+Copy+std::fmt::Debug
+{
+    pub fn symm(&self)->RawEntry<T>{
+        RawEntry{
+            i: self.j,
+            j: self.i,
+            value: self.value
+        }
+    }
+
+    pub fn skewsymm(&self)->RawEntry<T>{
+        RawEntry{
+            i: self.j,
+            j: self.i, 
+            value: T::zero()-self.value
+        }
+    }
+}
+
+impl<T> std::cmp::PartialEq for RawEntry<T>
+where T:Num+Copy+std::fmt::Debug{
+    fn eq(&self, other: &RawEntry<T>)->bool{
+        (self.i, self.j).eq(&(other.i, other.j))
+    }
+}
+
+impl<T> std::cmp::Eq for RawEntry<T>
+where T:Num+Copy+std::fmt::Debug{
+}
+
+
+impl<T> std::cmp::PartialOrd for RawEntry<T>
+where T: Num+Copy+std::fmt::Debug{
+    fn partial_cmp(&self, other: &RawEntry<T>)->Option<std::cmp::Ordering>{
+        Some((self.i, self.j).cmp(&(other.i, other.j)))
+    }
+}
+
+impl<T> std::cmp::Ord for RawEntry<T>
+where T: Num+Copy+std::fmt::Debug{
+    fn cmp(&self, other: &RawEntry<T>)->std::cmp::Ordering{
+        (self.i, self.j).cmp(&(other.i, other.j))
+}
+}
+
+
+impl<T> RawEntry<Complex<T>>
+where T: Num+std::ops::Neg<Output=T>+Copy+std::fmt::Debug
+{
+    pub fn hermit(&self)->RawEntry<Complex<T>>{
+        RawEntry{
+            i: self.j, 
+            j: self.i,
+            value: self.value.conj()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum DataType{
+    Real,
+    Complex,
 }
 
 #[derive(Debug)]
-pub struct LineProcessor{
-    qual: Qualifier, 
-    fmt: Format,
-    entry: RawEntry,
+pub struct RawMM<T>
+where T:Num+Copy+std::fmt::Debug
+{
+    height: usize,
+    width: usize,
+    storage: Storage,
+    qual: Qualifier,
+    entries: Vec<RawEntry<T>>,
 }
 
-pub fn read_file(fname: &str){
-    let file = File::open(fname).unwrap();
-    let reader = BufReader::new(file);
+pub trait Parseable{
+    fn parse(s: &[String])->Self;
+    fn type_string()->&'static str;
+}
 
-    let mut ii=reader.lines();
-    //parse 1st line
-    let fst_line:Vec<_>=if let Some(line)=ii.next(){
-        let xx=line.unwrap();
-        xx.split_ascii_whitespace().map(|x|{x.to_string()}).collect()
-    }else{
-        panic!()
-    };
+impl Parseable for f64{
+    fn parse(s: &[String])->f64{
+        s[0].parse::<f64>().unwrap()
+    }
 
-    assert!(fst_line[0]=="%%MatrixMarket");
-    assert!(fst_line[1]=="matrix");
-    let line_format=
-    if fst_line[2]=="coordinate" {
-        Format::Coordinate
-    }else if fst_line[2]=="array"{
-        Format::Array
-    }else{
-        panic!()
-    };
-
-    let data_type=if fst_line[3]=="real"{
-        MatrixValue::Real(0.0)
-    }else if fst_line[3]=="complex"{
-        MatrixValue::Complex(Complex64::new(0.0, 0.0))
-    }else{
-        panic!()
-    };
-
-    let qual=if fst_line[4]=="general"{
-        Qualifier::General
-    }else if fst_line[4]=="symmetric" {
-        Qualifier::Symmetric
-    }else if fst_line[4]=="skew-symmetric"{
-        Qualifier::SkewSymmetric
-    }else if fst_line[4]=="hermitian"{
-        Qualifier::Hermitian
-    }else{
-        panic!()
-    };
-
-    let line_processor=LineProcessor{
-        qual, 
-        fmt: line_format,
-        entry: RawEntry{
-            i: 0, j: 0, value: data_type,
-        },
-    };
-
-    println!("{:?}", fst_line);
-    while let Some(line)=ii.next(){
-        for i in line.unwrap().split_whitespace(){
-            print!("{:?}", i);
-        }
-        println!();
+    fn type_string()->&'static str{
+        "real"
     }
 }
+
+impl<T> RawMM<T>
+where T: Num+std::ops::Neg<Output=T>+Copy+std::fmt::Debug+Parseable
+{
+    pub fn from_file(fname: &str)->RawMM<T>{
+        let file = File::open(fname).unwrap();
+        let reader = BufReader::new(file);
+
+        let mut ii=reader.lines();
+        //parse 1st line
+        let fst_line:Vec<_>=if let Some(line)=ii.next(){
+            let xx=line.unwrap();
+            xx.split_ascii_whitespace().map(|x|{x.to_string()}).collect()
+        }else{
+            panic!()
+        };
+
+        assert!(fst_line[0]=="%%MatrixMarket");
+        assert!(fst_line[1]=="matrix");
+        let line_format=
+        if fst_line[2]=="coordinate" {
+            Format::Coordinate
+        }else if fst_line[2]=="array"{
+            Format::Array
+        }else{
+            panic!()
+        };
+
+        assert!(T::type_string()==fst_line[3]);
+
+        let qual=if fst_line[4]=="general"{
+            Qualifier::General
+        }else if fst_line[4]=="symmetric" {
+            Qualifier::Symmetric
+        }else if fst_line[4]=="skew-symmetric"{
+            Qualifier::SkewSymmetric
+        }else if fst_line[4]=="hermitian"{
+            Qualifier::Hermitian
+        }else{
+            panic!()
+        };
+
+
+        let snd_line:Vec<_>=if let Some(line)=ii.next(){
+            let xx=line.unwrap();
+            xx.split_ascii_whitespace().map(|x|{x.parse::<usize>().unwrap()}).collect()
+        }else{
+            panic!()
+        };
+
+        //println!("{:?}", snd_line);
+
+        //println!("{:?}", fst_line);
+
+
+        let width=snd_line[1];
+        let height=snd_line[0];
+        let mut raw_data=RawMM{
+            height, width,
+            storage: match line_format{
+                Format::Coordinate=>Storage::Sparse,
+                Format::Array=>Storage::Dense,
+            },
+            qual,
+            entries: vec![]
+        };
+
+        for (n, e) in ii.enumerate(){
+            let line=e.unwrap().split_ascii_whitespace().map(|x|{x.to_string()}).collect::<Vec<_>>();
+            let (i,j)=
+            match line_format{
+                Format::Array=>{
+                    let i=n/width;
+                    let j=n-i*width;
+                    (i,j)
+                }
+                Format::Coordinate=>{
+                    (line[0].parse::<usize>().unwrap()-1,
+                    line[1].parse::<usize>().unwrap()-1)
+                }
+            };
+
+            raw_data.entries.push(RawEntry{
+                i, j, 
+                value: T::parse(&line[2..])
+            });
+        }
+        raw_data
+    }
+
+    pub fn to_sparse(&self)->sprs::CsMat<T>{
+        let mut entries:Vec<_>=self.entries.iter().map(|x|{
+            self.qual.expand_items(x)
+        }).flatten().collect();
+        &entries[..].sort();
+        let mut indptr=vec![0];
+        let mut indices=vec![];
+        let mut data=vec![];
+
+        for RawEntry{i, j, value:v} in entries{
+            while i+2!=indptr.len(){
+                indptr.push(*indptr.last().unwrap());
+            }
+            indices.push(j);
+            data.push(v);
+            //data.push(T::one());
+            if let Some(x)=indptr.last_mut(){
+                *x=*x+1;
+            }else{
+                panic!()
+            }
+        }
+
+        //println!("{:?}", indptr);
+        //println!("{:?}", indices);
+        sprs::CsMat::new((self.height, self.width), indptr, indices, data)
+    }
+
+    pub fn to_array1(&self)->ndarray::Array1<T>{
+        assert!(self.width==1);
+        let mut entries:Vec<_>=self.entries.iter().map(|x|{
+            self.qual.expand_items(x)
+        }).flatten().collect();
+
+        let mut result=Array1::zeros(self.height);
+        for RawEntry{i, j, value: v} in entries{
+            result[i]=v;
+        }
+
+        result
+    }
+
+    pub fn to_array2(&self)->ndarray::Array2<T>{
+        let mut entries:Vec<_>=self.entries.iter().map(|x|{
+            self.qual.expand_items(x)
+        }).flatten().collect();
+
+        let mut result=Array2::zeros((self.height, self.width));
+        for RawEntry{i, j, value: v} in entries{
+            result[(i,j)]=v;
+        }
+
+        result
+    }
+}
+

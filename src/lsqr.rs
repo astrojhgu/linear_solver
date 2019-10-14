@@ -26,23 +26,6 @@ where
     pub rho_bar: T,
 }
 
-pub fn sp_mul_a1<T, I, IptrStorage, IndStorage, DataStorage>(
-    A: &sprs::CsMatBase<T, I, IptrStorage, IndStorage, DataStorage>,
-    b: ArrayView1<T>,
-) -> Array1<T>
-where
-    T: Float + Copy + Default + ScalarOperand,
-    I: sprs::SpIndex + ndarray::NdIndex<ndarray::Dim<[usize; 1]>>,
-    IptrStorage: std::ops::Deref<Target = [I]>,
-    IndStorage: std::ops::Deref<Target = [I]>,
-    DataStorage: std::ops::Deref<Target = [T]>,
-{
-    let mut result = Array1::from(vec![T::default(); A.rows()]);
-    for (&x, (i, j)) in A.iter() {
-        result[(i)] = result[(i)] + x * b[(j)];
-    }
-    result
-}
 
 pub fn lsqr_iter<T>(fl: &dyn Fn(ArrayView1<T>)->Array1<T>, fr: &dyn Fn(ArrayView1<T>)->Array1<T>, s_last: &LsqrState<T>) -> LsqrState<T>
 where

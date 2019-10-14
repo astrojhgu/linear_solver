@@ -3,7 +3,7 @@ extern crate ndarray;
 extern crate sprs;
 
 use linear_solver::bicgstab::BiCGStabState;
-use linear_solver::lsqr::sp_mul_a1;
+use linear_solver::utils::sp_mul_a1;
 use ndarray::Array1;
 
 fn main() {
