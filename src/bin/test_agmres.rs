@@ -6,6 +6,7 @@ extern crate sprs;
 
 use ndarray::{array, ArrayView1};
 use linear_solver::agmres::agmres;
+use linear_solver::agmres::AGmresState;
 use linear_solver::utils::sp_mul_a1;
 use linear_solver::io::RawMM;
 use ndarray::Array1;
@@ -25,10 +26,17 @@ fn main() {
     let mut x=Array1::<f64>::from(vec![10.0; a.cols()]);
     let M=|x: ArrayView1<f64>|->Array1<f64>{x.to_owned()};
     let mut tol=1e-20;
-    let mut atol=1e-20;
 
-    let r=agmres(&A, &mut x, b.view(), &M, 925, 10, 1, 1, 0.4, &mut tol, &mut atol);
-    println!("r={}", r);
-    println!("{:?}", x);
+    //let r=agmres(&A, &mut x, b.view(), &M, 925, 10, 1, 1, 0.4, &mut tol);
+    x.fill(10.);
+    let mut ags=AGmresState::<f64>::new(&A, &x, b.view(), &M, 10, 1, 1, 0.4, tol);
+    while !ags.converged{
+        ags.next(&A, &mut x, b.view(), &M);
+    }
 
+    ///println!("r={}", r);
+    //println!("{:?}", x);
+    for i in x.iter(){
+        println!("{}", i);
+    }
 }
