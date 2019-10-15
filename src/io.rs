@@ -3,7 +3,7 @@ use num_complex::{Complex, Complex64};
 use num_traits::Num;
 use sprs::CsMat;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 pub enum MM {
     SparseReal(CsMat<f64>),
     DenseReal(Array2<f64>),
@@ -15,6 +15,16 @@ pub enum MM {
 pub enum Storage {
     Dense,
     Sparse,
+}
+
+impl Storage {
+    pub fn stringfy(self) -> String {
+        match self {
+            Storage::Dense => "array",
+            Storage::Sparse => "coordinate",
+        }
+        .to_string()
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -43,6 +53,16 @@ impl Qualifier {
                 }
             }
         }
+    }
+
+    pub fn stringfy(self) -> String {
+        match self {
+            Qualifier::General => "general",
+            Qualifier::Symmetric => "symmetric",
+            Qualifier::SkewSymmetric => "skewsymmetric",
+            Qualifier::Hermitian => "hermitian",
+        }
+        .to_string()
     }
 }
 
@@ -145,12 +165,17 @@ where
 
 pub trait Parseable {
     fn parse(s: &[String]) -> Self;
+    fn stringfy(&self) -> Vec<String>;
     fn type_string() -> &'static str;
 }
 
 impl Parseable for f64 {
     fn parse(s: &[String]) -> f64 {
         s[0].parse::<f64>().unwrap()
+    }
+
+    fn stringfy(&self) -> Vec<String> {
+        vec![std::format!("{:e}", self)]
     }
 
     fn type_string() -> &'static str {
@@ -252,6 +277,36 @@ where
         raw_data
     }
 
+    pub fn to_file(&self, fname: &str) {
+        let mut f = std::fs::File::create(fname).unwrap();
+        writeln!(
+            &mut f,
+            "%%MatrixMarket matrix {} {} {}",
+            self.storage.stringfy(),
+            T::type_string(),
+            self.qual.stringfy()
+        )
+        .unwrap();
+        write!(&mut f, "{} {}", self.height, self.width).unwrap();
+        if let Storage::Sparse = self.storage {
+            writeln!(&mut f, " {}", self.entries.len()).unwrap();
+        } else {
+            writeln!(&mut f).unwrap();
+        }
+        let mut entries = self.entries.clone();
+        entries[..].sort();
+
+        for RawEntry { i, j, value: v } in entries {
+            if let Storage::Sparse = self.storage {
+                write!(&mut f, "{} {}", i + 1, j + 1).unwrap();
+            }
+            for s in v.stringfy() {
+                write!(&mut f, " {}", s).unwrap();
+            }
+            writeln!(&mut f).unwrap();
+        }
+    }
+
     pub fn to_sparse(&self) -> sprs::CsMat<T> {
         let mut entries: Vec<_> = self
             .entries
@@ -283,6 +338,21 @@ where
         sprs::CsMat::new((self.height, self.width), indptr, indices, data)
     }
 
+    pub fn from_sparse(mat: &sprs::CsMat<T>) -> RawMM<T> {
+        let entries: Vec<_> = mat
+            .iter()
+            .map(|(&v, (i, j))| RawEntry { i, j, value: v })
+            .collect();
+
+        RawMM {
+            height: mat.rows(),
+            width: mat.cols(),
+            qual: Qualifier::General,
+            storage: Storage::Sparse,
+            entries,
+        }
+    }
+
     pub fn to_array1(&self) -> ndarray::Array1<T> {
         assert!(self.width == 1);
         let entries: Vec<_> = self
@@ -300,6 +370,24 @@ where
         result
     }
 
+    pub fn from_array1(data: ndarray::ArrayView1<T>) -> RawMM<T> {
+        let entries: Vec<_> = (0..data.len())
+            .map(|i| RawEntry {
+                i,
+                j: 0,
+                value: data[i],
+            })
+            .collect();
+
+        RawMM {
+            height: data.len(),
+            width: 1,
+            qual: Qualifier::General,
+            storage: Storage::Dense,
+            entries,
+        }
+    }
+
     pub fn to_array2(&self) -> ndarray::Array2<T> {
         let entries: Vec<_> = self
             .entries
@@ -314,5 +402,26 @@ where
         }
 
         result
+    }
+
+    pub fn from_array2(data: ndarray::ArrayView2<T>) -> RawMM<T> {
+        let mut entries = Vec::new();
+        for i in 0..data.nrows() {
+            for j in 0..data.ncols() {
+                entries.push(RawEntry {
+                    i,
+                    j,
+                    value: data[(i, j)],
+                })
+            }
+        }
+
+        RawMM {
+            height: data.nrows(),
+            width: data.ncols(),
+            qual: Qualifier::General,
+            storage: Storage::Dense,
+            entries,
+        }
     }
 }
