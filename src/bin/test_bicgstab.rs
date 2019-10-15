@@ -17,26 +17,23 @@ fn main() {
         vec![4.0, 1.0, 1.0, 3.0],
     );
     //let b = sp_mul_a1(&a, &x0);
-    let b=Array1::<f64>::from(vec![1., 2.]);
+    let b = Array1::<f64>::from(vec![1., 2.]);
     println!("{:?}", b);
     println!("{}", (x0.dot(&x0)).sqrt());
 
-    let mut aa=BiCGStabState::new(&|x|{
-        sp_mul_a1(&a, x.view())
-    }, Array1::from(vec![1.,1.]), b.clone());
+    let mut aa = BiCGStabState::new(
+        &|x| sp_mul_a1(&a, x.view()),
+        Array1::from(vec![1., 1.]),
+        b.clone(),
+    );
 
-    while !aa.converged(&|x|{
-        sp_mul_a1(&a, x.view())
-    }, &b, 1e-25){
+    while !aa.converged(&|x| sp_mul_a1(&a, x.view()), &b, 1e-25) {
+        let result = aa.next(&|x| sp_mul_a1(&a, x.view()), 1e-10);
 
-    let result=aa.next(&|x|{
-        sp_mul_a1(&a, x.view())
-    }, 1e-10);
-    
-    if result.is_none(){
-        break;
-    }
+        if result.is_none() {
+            break;
+        }
 
-    println!("{:?}", aa.x);
+        println!("{:?}", aa.x);
     }
 }

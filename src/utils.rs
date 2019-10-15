@@ -1,17 +1,17 @@
-use ndarray::{ArrayView1, Array1, Array2, ScalarOperand};
-use sprs::CsMat;
-use num_traits::{Num, Float};
+#![allow(non_snake_case)]
+use ndarray::{Array1, Array2, ArrayView1, ScalarOperand};
+use num_traits::{Float, Num};
 
-pub fn sprs2dense<T>(s: &sprs::CsMat<T>)->Array2<T>
-where T:Copy+std::fmt::Debug+Num
+pub fn sprs2dense<T>(s: &sprs::CsMat<T>) -> Array2<T>
+where
+    T: Copy + std::fmt::Debug + Num,
 {
-    let mut result=Array2::zeros((s.rows(), s.cols()));
-    for (&x, (i, j)) in s.iter(){
-        result[(i,j)]=x;
+    let mut result = Array2::zeros((s.rows(), s.cols()));
+    for (&x, (i, j)) in s.iter() {
+        result[(i, j)] = x;
     }
     result
 }
-
 
 pub fn sp_mul_a1<T, I, IptrStorage, IndStorage, DataStorage>(
     A: &sprs::CsMatBase<T, I, IptrStorage, IndStorage, DataStorage>,
@@ -30,4 +30,3 @@ where
     }
     result
 }
-

@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 #![allow(clippy::many_single_char_names)]
 
-use ndarray::{Array1, ArrayView1};
 use ndarray::ScalarOperand;
+use ndarray::{Array1, ArrayView1};
 use num_traits::Float;
 
 pub fn eculid_norm<T>(x: &Array1<T>) -> T
@@ -26,10 +26,13 @@ where
     pub rho_bar: T,
 }
 
-
-pub fn lsqr_iter<T>(fl: &dyn Fn(ArrayView1<T>)->Array1<T>, fr: &dyn Fn(ArrayView1<T>)->Array1<T>, s_last: &LsqrState<T>) -> LsqrState<T>
+pub fn lsqr_iter<T>(
+    fl: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    fr: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    s_last: &LsqrState<T>,
+) -> LsqrState<T>
 where
-    T: Float + Copy + Default + ScalarOperand+std::fmt::Debug,
+    T: Float + Copy + Default + ScalarOperand + std::fmt::Debug,
 {
     let rhs_beta = fl(s_last.v.view()) - (&s_last.u) * (s_last.alpha);
     let beta = eculid_norm(&rhs_beta);
@@ -60,7 +63,11 @@ where
 }
 
 #[allow(non_snake_case)]
-pub fn lsqr_init<T>(fr: &dyn Fn(ArrayView1<T>)->Array1<T>, ncols: usize, b: &Array1<T>) -> LsqrState<T>
+pub fn lsqr_init<T>(
+    fr: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    ncols: usize,
+    b: &Array1<T>,
+) -> LsqrState<T>
 where
     T: Float + Copy + Default + ScalarOperand,
 {
@@ -87,37 +94,42 @@ where
 
 impl<T> LsqrState<T>
 where
-    T: Float + Copy + Default + ScalarOperand+ std::fmt::Debug,
+    T: Float + Copy + Default + ScalarOperand + std::fmt::Debug,
 {
-    pub fn new(fr: &dyn Fn(ArrayView1<T>)->Array1<T>,ncols: usize,  b: &Array1<T>) -> LsqrState<T> 
-    {
-        lsqr_init(fr, ncols,  b)
+    pub fn new(
+        fr: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        ncols: usize,
+        b: &Array1<T>,
+    ) -> LsqrState<T> {
+        lsqr_init(fr, ncols, b)
     }
 
-    pub fn next(&mut self, fl: &dyn Fn(ArrayView1<T>)->Array1<T>, fr: &dyn Fn(ArrayView1<T>)->Array1<T>)->Option<()> 
-    {
+    pub fn next(
+        &mut self,
+        fl: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        fr: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    ) -> Option<()> {
         let ns = lsqr_iter(fl, fr, self);
         println!("{}", ns.valid());
-        if ns.valid(){
+        if ns.valid() {
             *self = ns;
             Some(())
-        }else{
+        } else {
             None
         }
     }
 
-    pub fn calc_resid(&self, fl: &dyn Fn(ArrayView1<T>)->Array1<T>, b: &Array1<T>)->Array1<T>
-    {
-        b-&fl(self.x.view())
+    pub fn calc_resid(&self, fl: &dyn Fn(ArrayView1<T>) -> Array1<T>, b: &Array1<T>) -> Array1<T> {
+        b - &fl(self.x.view())
     }
 
-    pub fn valid(&self)->bool{
-        self.x.iter().all(|x|{x.is_finite()})&&
-        self.alpha.is_finite()&&
-        self.u.iter().all(|x| x.is_finite()) &&
-        self.v.iter().all(|x| x.is_finite()) &&
-        self.w.iter().all(|x| x.is_finite()) &&
-        self.phi_bar.is_finite()&&
-        self.rho_bar.is_finite()
+    pub fn valid(&self) -> bool {
+        self.x.iter().all(|x| x.is_finite())
+            && self.alpha.is_finite()
+            && self.u.iter().all(|x| x.is_finite())
+            && self.v.iter().all(|x| x.is_finite())
+            && self.w.iter().all(|x| x.is_finite())
+            && self.phi_bar.is_finite()
+            && self.rho_bar.is_finite()
     }
 }
