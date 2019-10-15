@@ -244,8 +244,4 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
         }
         agmres1(self, A, x, b, M);
     }
-
-    pub fn restart(&mut self){
-        self.converged=false;
-    }
 }
