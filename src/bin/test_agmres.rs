@@ -33,10 +33,10 @@ fn main() {
     let mut ags = AGmresState::<f64>::new(&A, x.view(), b.view(), &M, 10, 1, 1, 0.4, tol);
 
     x.fill(100.);
-    let mut cnt=0;
+    let mut cnt = 0;
     while !ags.converged {
-        cnt+=1;
-        if cnt%100==0{
+        cnt += 1;
+        if cnt % 100 == 0 {
             println!("{}", ags.resid);
         }
         ags.next(&A, &M);

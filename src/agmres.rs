@@ -265,8 +265,8 @@ where
                 nb
             }
         };
-        self.b=b.to_owned();
-        self.x=x.to_owned();
+        self.b = b.to_owned();
+        self.x = x.to_owned();
         self.r = A(x.view());
         let w = &b - &self.r;
         self.r = M(w.view());
