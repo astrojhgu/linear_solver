@@ -78,9 +78,9 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
     pub converged: bool, 
 }
 
-pub fn agmres1<T>(ags: &mut AGmresState<T>, A: &dyn Fn(ArrayView1<T>)->Array1<T>, x: &mut Array1<T>, b: ArrayView1<T>,M: &dyn Fn(ArrayView1<T>)->Array1<T>)->i32
+pub fn agmres1<T>(ags: &mut AGmresState<T>, A: &dyn Fn(ArrayView1<T>)->Array1<T>, x: &mut Array1<T>, b: ArrayView1<T>,M: &dyn Fn(ArrayView1<T>)->Array1<T>)
 where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug{
-ags.v[0]=(&ags.r/ags.beta);
+    ags.v[0]=(&ags.r/ags.beta);
         //println!("v={:?}", v);
     let mut s=Array1::<T>::zeros(ags.m+1);
     s[0]=ags.beta;
@@ -129,7 +129,7 @@ ags.v[0]=(&ags.r/ags.beta);
             update(x, i, &ags.H, &s, &ags.v[..]);
             //*tol = ags.resid.powi(2);
             ags.converged=true;
-            return 0;               
+            return;
         }
         i+=1;
     }
@@ -140,7 +140,7 @@ ags.v[0]=(&ags.r/ags.beta);
     ags.beta=norm(&ags.r.view());
     if ags.resid.powi(2)<ags.tol{
         ags.converged=true;
-        return 0;
+        return;
     }
 
     if ags.beta/r1 > ags.cf{
@@ -151,7 +151,7 @@ ags.v[0]=(&ags.r/ags.beta);
         }
     }
     ags.converged=false;
-    return 1;
+    return;
 }
 
 pub fn agmres<T>(A: &dyn Fn(ArrayView1<T>)->Array1<T>, x: &mut Array1<T>, b: ArrayView1<T>,M: &dyn Fn(ArrayView1<T>)->Array1<T>, max_iter: usize, m_max: usize, m_min: usize, m_step: usize, cf: T, tol: T)->i32
@@ -229,6 +229,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static+ std::fmt::Debug
         self.r=M(w.view());
         self.beta=norm(&self.r.view());
         self.resid=self.beta/normb;
+        self.converged=false;
     }
 
     pub fn new(A:&dyn Fn(ArrayView1<T>)->Array1<T>, x: &Array1<T>, b: ArrayView1<T>,M: &dyn Fn(ArrayView1<T>)->Array1<T>, m_max: usize, m_min: usize, m_step: usize, cf: T, tol: T)->Self{

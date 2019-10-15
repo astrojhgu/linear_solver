@@ -28,8 +28,9 @@ fn main() {
     let mut tol=1e-20;
 
     //let r=agmres(&A, &mut x, b.view(), &M, 925, 10, 1, 1, 0.4, &mut tol);
-    x.fill(10.);
     let mut ags=AGmresState::<f64>::new(&A, &x, b.view(), &M, 10, 1, 1, 0.4, tol);
+
+    x.fill(100.);
     while !ags.converged{
         ags.next(&A, &mut x, b.view(), &M);
     }
