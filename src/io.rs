@@ -183,6 +183,26 @@ impl Parseable for f64 {
     }
 }
 
+impl Parseable for Complex64 {
+    fn parse(s: &[String]) -> Complex64 {
+        let r = s[0].parse::<f64>().unwrap();
+        let i = if s.len() > 1 {
+            s[1].parse::<f64>().unwrap()
+        } else {
+            0.0_f64
+        };
+        Complex64::new(r, i)
+    }
+
+    fn stringfy(&self) -> Vec<String> {
+        vec![std::format!("{:e}", self.re), std::format!("{:e}", self.im)]
+    }
+
+    fn type_string() -> &'static str {
+        "complex"
+    }
+}
+
 impl<T> RawMM<T>
 where
     T: Num + std::ops::Neg<Output = T> + Copy + std::fmt::Debug + Parseable,
@@ -271,7 +291,10 @@ where
             raw_data.entries.push(RawEntry {
                 i,
                 j,
-                value: T::parse(&line[2..]),
+                value: match line_format {
+                    Format::Array => T::parse(&line[..]),
+                    Format::Coordinate => T::parse(&line[2..]),
+                },
             });
         }
         raw_data

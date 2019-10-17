@@ -54,11 +54,11 @@ where
     }
 }
 
-pub fn norm<T>(x: &ArrayView1<T>) -> T
+pub fn norm<T>(x: ArrayView1<T>) -> T
 where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
-    x.dot(x).sqrt()
+    x.dot(&x).sqrt()
 }
 
 pub struct AGmresState<T>
@@ -107,7 +107,7 @@ pub fn agmres1<T>(
             w = (&w) - &(&ags.v[k] * ags.H[(k, i)]);
         }
 
-        ags.H[(i + 1, i)] = norm(&w.view());
+        ags.H[(i + 1, i)] = norm(w.view());
         ags.v[i + 1] = (&w) / ags.H[(i + 1, i)];
 
         for k in 0..i {
@@ -148,10 +148,10 @@ pub fn agmres1<T>(
         i += 1;
     }
     update(&mut ags.x, i - 1, &ags.H, &s, &ags.v[..]);
-    ags.r = A(ags.x.view());
-    let w = &ags.b - &ags.r;
+    //ags.r = ;
+    let w = &ags.b - &A(ags.x.view());
     ags.r = M(w.view());
-    ags.beta = norm(&ags.r.view());
+    ags.beta = norm(ags.r.view());
     if ags.resid.powi(2) < ags.tol {
         ags.converged = true;
         return;
@@ -258,7 +258,7 @@ where
     ) {
         let w = M(b.view());
         let normb = {
-            let nb = norm(&w.view());
+            let nb = norm(w.view());
             if nb == T::zero() {
                 T::one()
             } else {
@@ -270,7 +270,7 @@ where
         self.r = A(x.view());
         let w = &b - &self.r;
         self.r = M(w.view());
-        self.beta = norm(&self.r.view());
+        self.beta = norm(self.r.view());
         self.resid = self.beta / normb;
         self.converged = false;
     }
