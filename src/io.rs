@@ -278,8 +278,8 @@ where
                 .collect::<Vec<_>>();
             let (i, j) = match line_format {
                 Format::Array => {
-                    let i = n / width;
-                    let j = n - i * width;
+                    let j = n / height;
+                    let i = n - j * height;
                     (i, j)
                 }
                 Format::Coordinate => (
