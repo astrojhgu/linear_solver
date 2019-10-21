@@ -175,6 +175,11 @@ where
         cf: T,
         tol: T,
     ) -> AGmresState<T> {
+        let m_max=if m_max > problem_size{
+            problem_size
+        }else{
+            m_max
+        };
         AGmresState {
             m,
             m_max,

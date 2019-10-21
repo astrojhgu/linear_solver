@@ -219,6 +219,16 @@ where
         } else {
             panic!()
         };
+        let mut ii=ii.filter(|l|{
+            if let Ok(ref a)=l{
+                if a.chars().next().unwrap()=='%'{
+                    return false;
+                }
+            }else{
+                panic!("fdsfads")
+            }
+            true
+        });
 
         assert!(fst_line[0] == "%%MatrixMarket");
         assert!(fst_line[1] == "matrix");
@@ -269,7 +279,7 @@ where
             qual,
             entries: vec![],
         };
-
+        
         for (n, e) in ii.enumerate() {
             let line = e
                 .unwrap()
