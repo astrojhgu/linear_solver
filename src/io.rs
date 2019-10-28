@@ -103,34 +103,6 @@ where
     }
 }
 
-impl<T> std::cmp::PartialEq for RawEntry<T>
-where
-    T: Num + Copy + std::fmt::Debug,
-{
-    fn eq(&self, other: &RawEntry<T>) -> bool {
-        (self.i, self.j).eq(&(other.i, other.j))
-    }
-}
-
-impl<T> std::cmp::Eq for RawEntry<T> where T: Num + Copy + std::fmt::Debug {}
-
-impl<T> std::cmp::PartialOrd for RawEntry<T>
-where
-    T: Num + Copy + std::fmt::Debug,
-{
-    fn partial_cmp(&self, other: &RawEntry<T>) -> Option<std::cmp::Ordering> {
-        Some((self.i, self.j).cmp(&(other.i, other.j)))
-    }
-}
-
-impl<T> std::cmp::Ord for RawEntry<T>
-where
-    T: Num + Copy + std::fmt::Debug,
-{
-    fn cmp(&self, other: &RawEntry<T>) -> std::cmp::Ordering {
-        (self.i, self.j).cmp(&(other.i, other.j))
-    }
-}
 
 impl<T> RawEntry<Complex<T>>
 where
@@ -145,11 +117,6 @@ where
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum DataType {
-    Real,
-    Complex,
-}
 
 #[derive(Debug)]
 pub struct RawMM<T>
@@ -182,6 +149,50 @@ impl Parseable for f64 {
         "real"
     }
 }
+
+impl Parseable for i32 {
+    fn parse(s: &[String]) -> i32 {
+        s[0].parse::<i32>().unwrap()
+    }
+
+    fn stringfy(&self) -> Vec<String> {
+        vec![std::format!("{}", self)]
+    }
+
+    fn type_string() -> &'static str {
+        "integer"
+    }
+}
+
+impl Parseable for i64 {
+    fn parse(s: &[String]) -> i64 {
+        s[0].parse::<i64>().unwrap()
+    }
+
+    fn stringfy(&self) -> Vec<String> {
+        vec![std::format!("{}", self)]
+    }
+
+    fn type_string() -> &'static str {
+        "integer"
+    }
+}
+
+impl Parseable for isize {
+    fn parse(s: &[String]) -> isize {
+        s[0].parse::<isize>().unwrap()
+    }
+
+    fn stringfy(&self) -> Vec<String> {
+        vec![std::format!("{}", self)]
+    }
+
+    fn type_string() -> &'static str {
+        "integer"
+    }
+}
+
+
 
 impl Parseable for Complex64 {
     fn parse(s: &[String]) -> Complex64 {
@@ -327,7 +338,9 @@ where
             writeln!(&mut f).unwrap();
         }
         let mut entries = self.entries.clone();
-        entries[..].sort();
+        entries[..].sort_by(|&a, &b|{
+            (a.j, a.i).cmp(&(b.j, b.i))
+        });
 
         for RawEntry { i, j, value: v } in entries {
             if let Storage::Sparse = self.storage {
@@ -347,7 +360,10 @@ where
             .map(|x| self.qual.expand_items(x))
             .flatten()
             .collect();
-        entries[..].sort();
+        entries[..].sort_by(|&a, &b|{
+            (a.i, a.j).cmp(&(b.i, b.j))
+        });
+
         let mut indptr = vec![0];
         let mut indices = vec![];
         let mut data = vec![];
@@ -441,6 +457,7 @@ where
         let mut entries = Vec::new();
         for i in 0..data.nrows() {
             for j in 0..data.ncols() {
+                eprintln!("{} {} {:?}", i, j, data[(i, j)]);
                 entries.push(RawEntry {
                     i,
                     j,

@@ -40,8 +40,12 @@ pub fn agmres1<T>(
 ) where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
+    //println!("{:?}", ags.beta);
+    if ags.beta==T::zero(){
+        ags.converged=true;
+        return;
+    }
     ags.v[0] = &ags.r / ags.beta;
-    //println!("v={:?}", v);
     let mut s = Array1::<T>::zeros(ags.m + 1);
     s[0] = ags.beta;
     let r1 = ags.beta;
@@ -87,7 +91,6 @@ pub fn agmres1<T>(
 
         ags.resid = s[i + 1].abs();
         if ags.resid.powi(2) < ags.tol {
-            //println!("resid={:?}, {:?}", resid, tol);
             update(&mut ags.x, i, &ags.H, &s, &ags.v[..]);
             //*tol = ags.resid.powi(2);
             ags.converged = true;
