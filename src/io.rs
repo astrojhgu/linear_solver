@@ -291,6 +291,8 @@ where
             entries: vec![],
         };
         
+
+        let mut col_num=0;
         for (n, e) in ii.enumerate() {
             let line = e
                 .unwrap()
@@ -299,9 +301,26 @@ where
                 .collect::<Vec<_>>();
             let (i, j) = match line_format {
                 Format::Array => {
-                    let j = n / height;
-                    let i = n - j * height;
-                    (i, j)
+                    match qual{
+                        Qualifier::General=>{
+                            let j = n / height;
+                            let i = n - j * height;
+                            (i, j)
+                        }
+                        Qualifier::Hermitian | Qualifier::Symmetric | Qualifier::SkewSymmetric=>{
+                            let nelements_before=(2*height-col_num+1)*col_num/2;
+                            let nelements=(2*height-col_num)*(col_num+1)/2;
+                            if n>=nelements{
+                                col_num+=1;
+                            }
+                            
+                            let nelements_before=(2*height-col_num+1)*col_num/2;
+                            let i=col_num;
+                            let j=col_num+n-nelements_before;
+                            //println!("{:?}", col_num);
+                            (i,j)
+                        }
+                    }
                 }
                 Format::Coordinate => (
                     line[0].parse::<usize>().unwrap() - 1,
