@@ -13,7 +13,7 @@ where
     pub res_prime: Array1<T>,
     pub p: Array1<T>,
     pub x: Array1<T>,
-    pub tol: T, 
+    pub tol: T,
     pub converged: bool,
 }
 
@@ -58,7 +58,7 @@ where
         p,
         x,
         tol: s_last.tol,
-        converged
+        converged,
     }
 }
 
@@ -70,7 +70,7 @@ where
         lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>,
         x: ArrayView1<T>,
         b: ArrayView1<T>,
-        tol: T, 
+        tol: T,
     ) -> BiCGStabState<T> {
         assert!(x.len() == b.len());
         let res = &b - &lhs(x.view());
@@ -81,15 +81,12 @@ where
             res_prime,
             p,
             x: x.to_owned(),
-            tol, 
-            converged: false
+            tol,
+            converged: false,
         }
     }
 
-    pub fn next(
-        &mut self,
-        lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-    ) -> std::option::Option<()> {
+    pub fn next(&mut self, lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>) -> std::option::Option<()> {
         let ns = bicgstab_iter(lhs, self);
         if ns.valid() {
             *self = ns;
@@ -99,11 +96,7 @@ where
         }
     }
 
-    pub fn calc_resid(
-        &self,
-        lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-        b: &Array1<T>,
-    ) -> Array1<T> {
+    pub fn calc_resid(&self, lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>, b: &Array1<T>) -> Array1<T> {
         b - &lhs(self.x.view())
     }
 

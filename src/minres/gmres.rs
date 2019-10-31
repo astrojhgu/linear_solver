@@ -6,8 +6,7 @@ use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1};
 use num_traits::Float;
 
-use super::utils::{apply_plane_rotation, generate_plane_rotation, update, norm};
-
+use super::utils::{apply_plane_rotation, generate_plane_rotation, norm, update};
 
 pub struct GmresState<T>
 where
@@ -28,7 +27,6 @@ where
     pub v: Vec<Array1<T>>,
     pub converged: bool,
 }
-
 
 pub fn gmres1<T>(
     ags: &mut GmresState<T>,
@@ -103,17 +101,11 @@ pub fn gmres1<T>(
     ags.converged = false;
 }
 
-
-
 impl<T> GmresState<T>
 where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
-    pub fn create(
-        problem_size: usize,
-        m: usize,
-        tol: T,
-    ) -> GmresState<T> {
+    pub fn create(problem_size: usize, m: usize, tol: T) -> GmresState<T> {
         GmresState {
             m,
             tol,
@@ -181,6 +173,4 @@ where
         }
         gmres1(self, A, M);
     }
-
-
 }

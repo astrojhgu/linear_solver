@@ -103,7 +103,6 @@ where
     }
 }
 
-
 impl<T> RawEntry<Complex<T>>
 where
     T: Num + std::ops::Neg<Output = T> + Copy + std::fmt::Debug,
@@ -116,7 +115,6 @@ where
         }
     }
 }
-
 
 #[derive(Debug)]
 pub struct RawMM<T>
@@ -192,8 +190,6 @@ impl Parseable for isize {
     }
 }
 
-
-
 impl Parseable for Complex64 {
     fn parse(s: &[String]) -> Complex64 {
         let r = s[0].parse::<f64>().unwrap();
@@ -230,12 +226,12 @@ where
         } else {
             panic!()
         };
-        let mut ii=ii.filter(|l|{
-            if let Ok(ref a)=l{
-                if a.starts_with('%'){
+        let mut ii = ii.filter(|l| {
+            if let Ok(ref a) = l {
+                if a.starts_with('%') {
                     return false;
                 }
-            }else{
+            } else {
                 panic!("fdsfads")
             }
             true
@@ -290,9 +286,8 @@ where
             qual,
             entries: vec![],
         };
-        
 
-        let mut col_num=0;
+        let mut col_num = 0;
         for (n, e) in ii.enumerate() {
             let line = e
                 .unwrap()
@@ -301,24 +296,24 @@ where
                 .collect::<Vec<_>>();
             let (i, j) = match line_format {
                 Format::Array => {
-                    match qual{
-                        Qualifier::General=>{
+                    match qual {
+                        Qualifier::General => {
                             let j = n / height;
                             let i = n - j * height;
                             (i, j)
                         }
-                        Qualifier::Hermitian | Qualifier::Symmetric | Qualifier::SkewSymmetric=>{
+                        Qualifier::Hermitian | Qualifier::Symmetric | Qualifier::SkewSymmetric => {
                             //let nelements_before=(2*height-col_num+1)*col_num/2;
-                            let nelements=(2*height-col_num)*(col_num+1)/2;
-                            if n>=nelements{
-                                col_num+=1;
+                            let nelements = (2 * height - col_num) * (col_num + 1) / 2;
+                            if n >= nelements {
+                                col_num += 1;
                             }
-                            
-                            let nelements_before=(2*height-col_num+1)*col_num/2;
-                            let i=col_num;
-                            let j=col_num+n-nelements_before;
+
+                            let nelements_before = (2 * height - col_num + 1) * col_num / 2;
+                            let i = col_num;
+                            let j = col_num + n - nelements_before;
                             //println!("{:?}", col_num);
-                            (i,j)
+                            (i, j)
                         }
                     }
                 }
@@ -357,9 +352,7 @@ where
             writeln!(&mut f).unwrap();
         }
         let mut entries = self.entries.clone();
-        entries[..].sort_by(|&a, &b|{
-            (a.j, a.i).cmp(&(b.j, b.i))
-        });
+        entries[..].sort_by(|&a, &b| (a.j, a.i).cmp(&(b.j, b.i)));
 
         for RawEntry { i, j, value: v } in entries {
             if let Storage::Sparse = self.storage {
@@ -379,9 +372,7 @@ where
             .map(|x| self.qual.expand_items(x))
             .flatten()
             .collect();
-        entries[..].sort_by(|&a, &b|{
-            (a.i, a.j).cmp(&(b.i, b.j))
-        });
+        entries[..].sort_by(|&a, &b| (a.i, a.j).cmp(&(b.i, b.j)));
 
         let mut indptr = vec![0];
         let mut indices = vec![];

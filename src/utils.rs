@@ -43,11 +43,11 @@ where
     DataStorage: std::ops::Deref<Target = [T]>,
 {
     //let mut result = Array1::from(vec![T::default(); A.rows()]);
-    let mut result=Array2::zeros((A.rows(), B.ncols()));
+    let mut result = Array2::zeros((A.rows(), B.ncols()));
 
     for (&x, (i, k)) in A.iter() {
-        for j in 0..B.ncols(){
-            result[(i.into(),j)] = result[(i.into(),j)] + x * B[(k.into(),j)];
+        for j in 0..B.ncols() {
+            result[(i.into(), j)] = result[(i.into(), j)] + x * B[(k.into(), j)];
         }
     }
     result

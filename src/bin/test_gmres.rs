@@ -5,8 +5,8 @@ extern crate linear_solver;
 extern crate ndarray;
 extern crate sprs;
 
-use linear_solver::minres::gmres::GmresState;
 use linear_solver::io::RawMM;
+use linear_solver::minres::gmres::GmresState;
 use linear_solver::utils::sp_mul_a1;
 use ndarray::Array1;
 use ndarray::{array, ArrayView1};

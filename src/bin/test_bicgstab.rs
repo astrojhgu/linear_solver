@@ -25,7 +25,7 @@ fn main() {
         &|x| sp_mul_a1(&a, x.view()),
         ArrayView1::from(&[1., 1.]),
         b.view(),
-        1e-25
+        1e-25,
     );
 
     while !aa.converged {

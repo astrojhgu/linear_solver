@@ -6,8 +6,7 @@ use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1};
 use num_traits::Float;
 
-use super::utils::{apply_plane_rotation, generate_plane_rotation, update, norm};
-
+use super::utils::{apply_plane_rotation, generate_plane_rotation, norm, update};
 
 pub struct AGmresState<T>
 where
@@ -41,8 +40,8 @@ pub fn agmres1<T>(
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
     //println!("{:?}", ags.beta);
-    if ags.beta==T::zero(){
-        ags.converged=true;
+    if ags.beta == T::zero() {
+        ags.converged = true;
         return;
     }
     ags.v[0] = &ags.r / ags.beta;
@@ -178,9 +177,9 @@ where
         cf: T,
         tol: T,
     ) -> AGmresState<T> {
-        let m_max=if m_max > problem_size{
+        let m_max = if m_max > problem_size {
             problem_size
-        }else{
+        } else {
             m_max
         };
         AGmresState {

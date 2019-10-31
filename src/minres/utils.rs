@@ -6,7 +6,6 @@ use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1};
 use num_traits::Float;
 
-
 pub fn apply_plane_rotation<T>(mut dx: T, mut dy: T, cs: T, sn: T) -> (T, T)
 where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
