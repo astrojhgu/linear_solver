@@ -232,7 +232,7 @@ where
         };
         let mut ii=ii.filter(|l|{
             if let Ok(ref a)=l{
-                if a.chars().next().unwrap()=='%'{
+                if a.starts_with('%'){
                     return false;
                 }
             }else{
@@ -308,7 +308,7 @@ where
                             (i, j)
                         }
                         Qualifier::Hermitian | Qualifier::Symmetric | Qualifier::SkewSymmetric=>{
-                            let nelements_before=(2*height-col_num+1)*col_num/2;
+                            //let nelements_before=(2*height-col_num+1)*col_num/2;
                             let nelements=(2*height-col_num)*(col_num+1)/2;
                             if n>=nelements{
                                 col_num+=1;
@@ -476,7 +476,7 @@ where
         let mut entries = Vec::new();
         for i in 0..data.nrows() {
             for j in 0..data.ncols() {
-                eprintln!("{} {} {:?}", i, j, data[(i, j)]);
+                //eprintln!("{} {} {:?}", i, j, data[(i, j)]);
                 entries.push(RawEntry {
                     i,
                     j,
