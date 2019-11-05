@@ -1,3 +1,6 @@
+#![allow(clippy::many_single_char_names)]
+#![allow(non_snake_case)]
+
 use ndarray::{s, Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::Float;
 
@@ -79,7 +82,7 @@ where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
     let nrows = mat.nrows();
-    let ncols = mat.ncols();
+    //let ncols = mat.ncols();
     let mut Q = Array2::eye(nrows);
     let mut R = mat.to_owned();
     let two = T::one() + T::one();
@@ -107,8 +110,7 @@ where
     let nrows = mat.nrows();
     let ncols = mat.ncols();
     let mut Q = unsafe { Array2::<T>::uninitialized((nrows, ncols)) };
-    let mut cnt = 0;
-    for a in mat.t().genrows() {
+    for (cnt, a) in mat.t().genrows().into_iter().enumerate() {
         let mut u = a.to_owned();
         for i in 0..cnt {
             let proj = &Q.column(i) * (Q.column(i).dot(&a));
@@ -116,7 +118,6 @@ where
         }
         let e = &u / norm(u.view());
         Q.column_mut(cnt).assign(&e);
-        cnt += 1;
     }
     let R = Q.t().dot(&mat);
     (Q, R)
