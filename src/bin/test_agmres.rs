@@ -30,7 +30,7 @@ fn main() {
     let tol = 1e-20;
 
     //let r=agmres(&A, &mut x, b.view(), &M, 925, 10, 1, 1, 0.4, &mut tol);
-    let mut ags = AGmresState::<f64>::new(&A, x.view(), b.view(), &M, 30, 1, 1, 0.4, tol);
+    let mut ags = AGmresState::<f64>::new(&A, x.view(), b.view(), Some(&M), 30, 1, 1, 0.4, tol);
 
     x.fill(100.);
     let mut cnt = 0;
@@ -39,7 +39,7 @@ fn main() {
         if cnt % 100 == 0 {
             println!("{}", ags.resid);
         }
-        ags.next(&A, &M);
+        ags.next(&A, Some(&M));
     }
 
     //println!("r={}", r);

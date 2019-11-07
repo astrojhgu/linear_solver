@@ -20,7 +20,7 @@ where
     //s: Array1<T>,
     pub cs: Array1<T>,
     pub sn: Array1<T>,
-    pub av: Array1<T>,
+    //pub av: Array1<T>,
     pub beta: T,
     pub resid: T,
     pub r: Array1<T>,
@@ -31,7 +31,7 @@ where
 pub fn gmres1<T>(
     ags: &mut GmresState<T>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-    M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
@@ -43,10 +43,16 @@ pub fn gmres1<T>(
     let mut i = 0;
     while i < ags.m {
         let av = A(ags.v[i].view());
-        let mut w = M(av.view());
+        let mut w=
+        if let Some(ref M)=M{
+            M(av.view())
+        }else{
+            av
+        };
+        //let mut w = M(av.view());
         for k in 0..=i {
             ags.H[(k, i)] = w.dot(&ags.v[k]);
-            w = (&w) - &(&ags.v[k] * ags.H[(k, i)]);
+            w = w - (&ags.v[k] * ags.H[(k, i)]);
         }
 
         ags.H[(i + 1, i)] = norm(w.view());
@@ -92,7 +98,11 @@ pub fn gmres1<T>(
     update(&mut ags.x, i - 1, &ags.H, &s, &ags.v[..]);
     //ags.r = ;
     let w = &ags.b - &A(ags.x.view());
-    ags.r = M(w.view());
+    ags.r=if let Some(ref M)=M{
+        M(w.view())
+    }else{
+        w
+    };
     ags.beta = norm(ags.r.view());
     if ags.resid.powi(2) < ags.tol {
         ags.converged = true;
@@ -115,7 +125,7 @@ where
             //s: Array1::<T>::zeros(m+1),
             cs: Array1::<T>::zeros(m + 1),
             sn: Array1::<T>::zeros(m + 1),
-            av: Array1::<T>::zeros(problem_size),
+            //av: Array1::<T>::zeros(problem_size),
             beta: T::zero(),
             resid: T::zero(),
             r: Array1::<T>::zeros(problem_size),
@@ -166,11 +176,16 @@ where
     pub fn next(
         &mut self,
         A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-        M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
     ) {
         if self.converged {
             return;
         }
         gmres1(self, A, M);
     }
+
+    pub fn calc_resid(&self, lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>, b: &Array1<T>) -> Array1<T> {
+        b - &lhs(self.x.view())
+    }
+
 }

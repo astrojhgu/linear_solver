@@ -38,7 +38,7 @@ fn main() {
         if cnt % 100 == 0 {
             println!("{}", ags.resid);
         }
-        ags.next(&A, &M);
+        ags.next(&A, Some(&M));
     }
 
     //println!("r={}", r);

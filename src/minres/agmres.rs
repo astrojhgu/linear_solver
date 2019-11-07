@@ -24,7 +24,7 @@ where
     //s: Array1<T>,
     pub cs: Array1<T>,
     pub sn: Array1<T>,
-    pub av: Array1<T>,
+    //pub av: Array1<T>,
     pub beta: T,
     pub resid: T,
     pub r: Array1<T>,
@@ -35,7 +35,7 @@ where
 pub fn agmres1<T>(
     ags: &mut AGmresState<T>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-    M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
@@ -52,7 +52,13 @@ pub fn agmres1<T>(
     let mut i = 0;
     while i < ags.m {
         let av = A(ags.v[i].view());
-        let mut w = M(av.view());
+        //let mut w=M.map_or(av,|m|{m(av.view())});
+        let mut w=if let Some(M)=M{
+            M(av.view())
+        }else{
+            av
+        };
+        
         for k in 0..=i {
             ags.H[(k, i)] = w.dot(&ags.v[k]);
             w = (&w) - &(&ags.v[k] * ags.H[(k, i)]);
@@ -100,7 +106,13 @@ pub fn agmres1<T>(
     update(&mut ags.x, i - 1, &ags.H, &s, &ags.v[..]);
     //ags.r = ;
     let w = &ags.b - &A(ags.x.view());
-    ags.r = M(w.view());
+    ags.r=if let Some(M)=M{
+        M(w.view())
+    }else{
+        w
+    };
+    
+    //ags.r = M(w.view());
     ags.beta = norm(ags.r.view());
     if ags.resid.powi(2) < ags.tol {
         ags.converged = true;
@@ -121,7 +133,7 @@ pub fn agmres<T>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     x: ArrayView1<T>,
     b: ArrayView1<T>,
-    M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+    M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
     max_iter: usize,
     m_max: usize,
     m_min: usize,
@@ -195,7 +207,6 @@ where
             //s: Array1::<T>::zeros(m+1),
             cs: Array1::<T>::zeros(m + 1),
             sn: Array1::<T>::zeros(m + 1),
-            av: Array1::<T>::zeros(problem_size),
             beta: T::zero(),
             resid: T::zero(),
             r: Array1::<T>::zeros(problem_size),
@@ -209,9 +220,9 @@ where
         A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
         x: ArrayView1<T>,
         b: ArrayView1<T>,
-        M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
     ) {
-        let w = M(b.view());
+        let w=M.map_or(b.to_owned(),|m|{m(b.view())});
         let normb = {
             let nb = norm(w.view());
             if nb == T::zero() {
@@ -224,7 +235,12 @@ where
         self.x = x.to_owned();
         self.r = A(x.view());
         let w = &b - &self.r;
-        self.r = M(w.view());
+        self.r= if let Some(M)=M{
+            M(w.view())
+        }else{
+            w
+        };
+        
         self.beta = norm(self.r.view());
         self.resid = self.beta / normb;
         self.converged = false;
@@ -234,7 +250,7 @@ where
         A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
         x: ArrayView1<T>,
         b: ArrayView1<T>,
-        M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
         m_max: usize,
         m_min: usize,
         m_step: usize,
@@ -249,11 +265,15 @@ where
     pub fn next(
         &mut self,
         A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
-        M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
+        M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
     ) {
         if self.converged {
             return;
         }
         agmres1(self, A, M);
+    }
+
+    pub fn calc_resid(&self, lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>, b: &Array1<T>) -> Array1<T> {
+        b - &lhs(self.x.view())
     }
 }
