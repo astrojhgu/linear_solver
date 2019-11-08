@@ -61,11 +61,11 @@ pub fn agmres1<T>(
         
         for k in 0..=i {
             ags.H[(k, i)] = w.dot(&ags.v[k]);
-            w = (&w) - &(&ags.v[k] * ags.H[(k, i)]);
+            w = w - &ags.v[k] * ags.H[(k, i)];
         }
 
         ags.H[(i + 1, i)] = norm(w.view());
-        ags.v[i + 1] = (&w) / ags.H[(i + 1, i)];
+        ags.v[i + 1] = w / ags.H[(i + 1, i)];
 
         for k in 0..i {
             let (dx, dy) =
