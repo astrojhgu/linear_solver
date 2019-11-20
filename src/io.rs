@@ -86,6 +86,11 @@ impl<T> RawEntry<T>
 where
     T: Num + Copy + std::fmt::Debug,
 {
+    pub fn new(i: usize, j: usize, value: T)->RawEntry<T>{
+        RawEntry{
+            i, j, value
+        }
+    }
     pub fn symm(&self) -> RawEntry<T> {
         RawEntry {
             i: self.j,
@@ -121,11 +126,11 @@ pub struct RawMM<T>
 where
     T: Num + Copy + std::fmt::Debug,
 {
-    height: usize,
-    width: usize,
-    storage: Storage,
-    qual: Qualifier,
-    entries: Vec<RawEntry<T>>,
+    pub height: usize,
+    pub width: usize,
+    pub storage: Storage,
+    pub qual: Qualifier,
+    pub entries: Vec<RawEntry<T>>,
 }
 
 pub trait Parseable {
