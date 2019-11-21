@@ -77,9 +77,9 @@ pub struct RawEntry<T>
 where
     T: Num + Copy + std::fmt::Debug,
 {
-    i: usize,
-    j: usize,
-    value: T,
+    pub i: usize,
+    pub j: usize,
+    pub value: T,
 }
 
 impl<T> RawEntry<T>
