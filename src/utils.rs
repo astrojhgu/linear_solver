@@ -2,6 +2,14 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::{Float, Num};
 
+pub fn norm<T>(x: ArrayView1<T>) -> T
+where
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+{
+    x.dot(&x).sqrt()
+}
+
+
 pub fn sprs2dense<T>(s: &sprs::CsMat<T>) -> Array2<T>
 where
     T: Copy + std::fmt::Debug + Num,

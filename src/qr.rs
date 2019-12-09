@@ -3,22 +3,12 @@
 
 use ndarray::{s, Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::Float;
-
+use crate::utils::norm;
 fn copy_sign<T>(x: T, y: T) -> T
 where
     T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
 {
     y.signum() * x.abs()
-}
-
-fn norm<T>(x: ArrayView1<T>) -> T
-where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
-{
-    x.iter()
-        .map(|&x| x.powi(2))
-        .fold(T::zero(), |x, y| x + y)
-        .sqrt()
 }
 
 fn givens_rotation_matrix_entries<T>(a: T, b: T) -> (T, T)

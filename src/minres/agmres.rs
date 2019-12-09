@@ -6,7 +6,8 @@ use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1};
 use num_traits::Float;
 
-use super::utils::{apply_plane_rotation, generate_plane_rotation, norm, update};
+use super::utils::{apply_plane_rotation, generate_plane_rotation, update};
+use crate::utils::norm;
 
 pub struct AGmresState<T>
 where

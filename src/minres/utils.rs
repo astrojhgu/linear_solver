@@ -54,9 +54,3 @@ where
     }
 }
 
-pub fn norm<T>(x: ArrayView1<T>) -> T
-where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
-{
-    x.dot(&x).sqrt()
-}
