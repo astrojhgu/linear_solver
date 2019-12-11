@@ -9,6 +9,31 @@ where
     x.dot(&x).sqrt()
 }
 
+pub trait HasConj{
+    fn conj(&self)->Self;
+}
+
+impl HasConj for f64{
+    fn conj(&self)->f64{
+        *self
+    }
+}
+
+impl HasConj for f32{
+    fn conj(&self)->f32{
+        *self
+    }
+}
+
+impl<T> HasConj for num_complex::Complex<T>
+where T:num_traits::Float
+{
+    fn conj(&self)->num_complex::Complex<T>{
+        num_complex::Complex::<T>::conj(self)
+    }
+}
+
+
 
 pub fn sprs2dense<T>(s: &sprs::CsMat<T>) -> Array2<T>
 where

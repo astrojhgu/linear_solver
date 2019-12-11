@@ -1,10 +1,29 @@
+#![allow(non_snake_case)]
+
 use num_traits::Float;
 use ndarray::ScalarOperand;
-use ndarray::{Array1, Array2, ArrayView1, ArrayView2,s};
-use crate::utils::norm;
+use ndarray::{Array1, Array2, ArrayView1, s};
+use crate::utils::{norm, HasConj};
+
+#[derive(Debug)]
+pub enum ArnoldiErr{
+    HMM1Zero,
+    NoMoreBase,
+}
+
+impl std::fmt::Display for ArnoldiErr{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error>{
+        write!(f, "H(m, m+1)=0")
+    }
+}
+
+
+impl std::error::Error for ArnoldiErr{
+}
+
 pub struct ArnoldiSpace<T>
 where 
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
 
 {
     pub Q: Vec<Array1<T>>,
@@ -13,7 +32,7 @@ where
 
 impl<T> ArnoldiSpace<T>
 where 
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
 {
     pub fn new(b: ArrayView1<T>)->ArnoldiSpace<T>{
         let q=&b/norm(b);
@@ -23,24 +42,27 @@ where
         }
     }
 
-    pub fn iter(&mut self, A: &dyn Fn(ArrayView1<T>) -> Array1<T>)->Option<()>{
+    pub fn iter(&mut self, A: &dyn Fn(ArrayView1<T>) -> Array1<T>)->std::result::Result<(), ArnoldiErr>{
         let m=self.Q[0].len();
+        if self.Q.len()>=m{
+            return Err(ArnoldiErr::NoMoreBase);
+        }
         //let mut v=self.A.dot(self.Q.last().unwrap());
         let mut v=A(self.Q.last().unwrap().view());
         let k=self.H.len();
         self.H.push(Array1::zeros(k+2));
         //self.Q.push(Array1::zeros(self.q.len()));
         for j in 0..=k{
-            self.H[k][j]=self.Q[j].dot(&v);
+            self.H[k][j]=self.Q[j].map(|&x|{x.conj()}).dot(&v);
             v=&v-&(&self.Q[j]*self.H[k][j]);
         }
         self.H[k][k+1]=norm(v.view());
         let q=v/self.H[k][k+1];
         if q.iter().all(|x|x.is_finite()){
             self.Q.push(q);
-            Some(())
+            Result::Ok(())
         }else{
-            None
+            Result::Err(ArnoldiErr::HMM1Zero)
         }
     }
 

@@ -8,8 +8,14 @@ pub fn main(){
 
     let b=RawMM::<f64>::from_file("b.mtx").to_array1();
     let mut arn=ArnoldiSpace::new(b.view());
-    arn.iter(&A).unwrap();
-    arn.iter(&A).unwrap();
+    //while let Ok(())=arn.iter(&A){
+    //}
+    for i in 0..15{
+        arn.iter(&A).unwrap();
+    }
     //println!("{:?}",arn.Q);
-    println!("{:?}", arn.get_Q());
+    let H=arn.get_H();
+    let Q=arn.get_Q();
+    RawMM::from_array2(H.view()).to_file("H.mtx");
+    RawMM::from_array2(Q.view()).to_file("Q.mtx");
 }

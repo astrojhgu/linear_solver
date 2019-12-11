@@ -3,7 +3,7 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
 use ndarray::ScalarOperand;
-use ndarray::{Array1, Array2, ArrayView1};
+use ndarray::{Array1, Array2};
 use num_traits::Float;
 
 pub fn apply_plane_rotation<T>(mut dx: T, mut dy: T, cs: T, sn: T) -> (T, T)
