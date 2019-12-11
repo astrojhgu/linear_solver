@@ -53,9 +53,11 @@ T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
     let th=th.abs();
     let I=Array2::eye(n);
     let mut A=hessenberg_reduction(A);
+    //let mut A=A.to_owned();
     while(A[(n-1, n-2)].abs()>th){
         println!("{:?}", A[(n-1, n-2)]);
         let mu=wilkinson_shift(A[(n-2, n-2)], A[(n-1,n-1)], A[(n-2, n-1)]);
+        //let mu=T::zero();
         let (q,r)=qrdecomp((&A-&(&I*mu)).view());
         A=r.dot(&q)+&(&I*mu);
     }

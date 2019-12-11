@@ -187,5 +187,4 @@ where
     pub fn calc_resid(&self, lhs: &dyn Fn(ArrayView1<T>) -> Array1<T>, b: &Array1<T>) -> Array1<T> {
         b - &lhs(self.x.view())
     }
-
 }
