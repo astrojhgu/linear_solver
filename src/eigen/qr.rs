@@ -1,8 +1,67 @@
 #![allow(non_snake_case)]
 use crate::qr::givens_rotation as qrdecomp;
 use num_traits::Float;
-use ndarray::{ArrayView2, ScalarOperand, s};
+use ndarray::{Array1, Array2, ArrayView2, ScalarOperand, s};
 use num_complex::Complex;
+use crate::utils::norm;
+
+pub fn hessenberg_reduction<T>(A: ArrayView2<T>)->Array2<T>
+where 
+T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+    let mut n0=0;
+    let n=A.nrows();
+    let mut A=A.to_owned();
+    let two=T::from(2).unwrap();
+    for n0 in 0..n-2{
+        let a1=A.slice(s![n0+1..,n0]).to_owned();
+        let mut e1=Array1::zeros(n-n0-1);
+        e1[0]=T::one();
+        let sign=a1[0].signum();
+        let v=&a1 + &(&e1 * (sign*norm(a1.view())));
+        let v=(&v/norm(v.view())).into_shape((n-n0-1, 1)).unwrap();
+        //let v=v;
+        
+        let Q1=Array2::<T>::eye(A.rows()-n0-1) - &(&(v.dot(&v.t()))*two);
+        
+        let x=A.slice(s![n0+1..n, n0]).to_owned();
+        A.slice_mut(s![n0+1..n, n0]).assign(&Q1.dot(&x));
+        
+        let x=A.slice(s![n0, n0+1..n]).to_owned();
+        A.slice_mut(s![n0, n0+1..n]).assign(&Q1.dot(&x));
+
+        let a=A.slice(s![n0+1..n, n0+1..n]).to_owned();
+        A.slice_mut(s![n0+1..n, n0+1..n]).assign(&Q1.dot(&(a.dot(&Q1.t()))));
+    }
+    A
+}
+
+pub fn wilkinson_shift<T>(a: T, b: T, c: T)->T
+where 
+T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+    let d=(a-c)/T::from(2).unwrap();
+    c-d.signum()*b.powi(2)/(d.abs()+(d.powi(2)+b.powi(2)).sqrt())
+}
+
+
+pub fn qr_with_shift<T>(A: ArrayView2<T>, th: T)->Array2<T>
+where 
+T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+    let n=A.nrows();
+    if n==1{
+        return A.to_owned();
+    }
+    let th=th.abs();
+    let I=Array2::eye(n);
+    let mut A=hessenberg_reduction(A);
+    while(A[(n-1, n-2)].abs()>th){
+        println!("{:?}", A[(n-1, n-2)]);
+        let mu=wilkinson_shift(A[(n-2, n-2)], A[(n-1,n-1)], A[(n-2, n-1)]);
+        let (q,r)=qrdecomp((&A-&(&I*mu)).view());
+        A=r.dot(&q)+&(&I*mu);
+    }
+    A
+}
+
 
 pub fn eigv2x2<T>(A:ArrayView2<T>)->(Complex<T>, Complex<T>)
 where 
@@ -21,6 +80,17 @@ where
     let L1=Complex::from(T/TWO)+E;
     let L2=Complex::from(T/TWO)-E;
     (L1, L2)
+}
+
+pub fn qr_naive_iter<T>(A:ArrayView2<T>, niter:usize)->Array2<T>
+where T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+    let(mut q,mut r)=qrdecomp(A);
+    let mut A=A.to_owned();
+    for i in 0..niter{
+        let (q,r)=qrdecomp(A.view());
+        A=r.dot(&q);
+    }
+    A
 }
 
 pub fn qr_naive<T>(A:ArrayView2<T>, niter:usize, tol: T)->Vec<Complex<T>>
