@@ -6,12 +6,13 @@ use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1};
 use num_traits::Float;
 
-use super::utils::{apply_plane_rotation, generate_plane_rotation, update};
+use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::utils::norm;
-
+use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
+use crate::utils::HasConj;
 pub struct AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
 {
     pub m: usize,
     pub m_max: usize,
@@ -21,7 +22,7 @@ where
     pub tol: T,
     pub x: Array1<T>,
     pub b: Array1<T>,
-    pub H: Array2<T>,
+    //pub H: Array2<T>,
     //s: Array1<T>,
     pub cs: Array1<T>,
     pub sn: Array1<T>,
@@ -29,8 +30,9 @@ where
     pub beta: T,
     pub resid: T,
     pub r: Array1<T>,
-    pub v: Vec<Array1<T>>,
+    //pub v: Vec<Array1<T>>,
     pub converged: bool,
+    pub arn: ArnoldiSpace<T>,
 }
 
 pub fn agmres1<T>(
@@ -38,51 +40,48 @@ pub fn agmres1<T>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
 {
     //println!("{:?}", ags.beta);
     if ags.beta == T::zero() {
         ags.converged = true;
         return;
     }
-    ags.v[0] = &ags.r / ags.beta;
+    //ags.v[0] = &ags.r / ags.beta;
+    ags.arn.reset(ags.r.view());
     let mut s = Array1::<T>::zeros(ags.m + 1);
     s[0] = ags.beta;
     let r1 = ags.beta;
 
     let mut i = 0;
     while i < ags.m {
-        let av = A(ags.v[i].view());
-        //let mut w=M.map_or(av,|m|{m(av.view())});
-        let mut w=if let Some(M)=M{
-            M(av.view())
-        }else{
-            av
-        };
-        
-        for k in 0..=i {
-            ags.H[(k, i)] = w.dot(&ags.v[k]);
-            w = w - &ags.v[k] * ags.H[(k, i)];
-        }
-
-        ags.H[(i + 1, i)] = norm(w.view());
-        ags.v[i + 1] = w / ags.H[(i + 1, i)];
+        ags.arn.iter(&|x|{
+            let av=A(x);
+            if let Some(ref M)=M{
+                M(av.view())
+            }else{
+                av
+            }
+        }).unwrap();
 
         for k in 0..i {
             let (dx, dy) =
-                apply_plane_rotation(ags.H[(k, i)], ags.H[(k + 1, i)], ags.cs[k], ags.sn[k]);
-            ags.H[(k, i)] = dx;
-            ags.H[(k + 1, i)] = dy;
+                apply_plane_rotation(ags.arn.H[i][k], ags.arn.H[i][k+1], ags.cs[k], ags.sn[k]);
+            //ags.H[(k, i)] = dx;
+            //ags.H[(k + 1, i)] = dy;
+            ags.arn.H[i][k]=dx;
+            ags.arn.H[i][k+1]=dy;
         }
 
-        let (cs1, sn1) = generate_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)]);
+        let (cs1, sn1) = generate_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1]);
         ags.cs[i] = cs1;
         ags.sn[i] = sn1;
         {
             let (dx, dy) =
-                apply_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)], ags.cs[i], ags.sn[i]);
-            ags.H[(i, i)] = dx;
-            ags.H[(i + 1, i)] = dy;
+                //apply_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)], ags.cs[i], ags.sn[i]);
+                apply_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1], ags.cs[i], ags.sn[i]);
+            ags.arn.H[i][i] = dx;
+            ags.arn.H[i][i+1] = dy;
         }
         {
             let (dx, dy) = apply_plane_rotation(s[i], s[i + 1], ags.cs[i], ags.sn[i]);
@@ -97,14 +96,15 @@ pub fn agmres1<T>(
 
         ags.resid = s[i + 1].abs();
         if ags.resid.powi(2) < ags.tol {
-            update(&mut ags.x, i, &ags.H, &s, &ags.v[..]);
+            //println!("resid={:?}, {:?}", resid, tol);
+            update2(&mut ags.x, i, &ags.arn.H, &s, &ags.arn.Q[..]);
             //*tol = ags.resid.powi(2);
             ags.converged = true;
             return;
         }
         i += 1;
     }
-    update(&mut ags.x, i - 1, &ags.H, &s, &ags.v[..]);
+    update2(&mut ags.x, i - 1, &ags.arn.H, &s, &ags.arn.Q[..]);
     //ags.r = ;
     let w = &ags.b - &A(ags.x.view());
     ags.r=if let Some(M)=M{
@@ -143,7 +143,7 @@ pub fn agmres<T>(
     tol: T,
 ) -> AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug+ HasConj,
 {
     let mut ags = AGmresState::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
 
@@ -179,7 +179,7 @@ where
 
 impl<T> AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
 {
     pub fn create(
         problem_size: usize,
@@ -204,15 +204,14 @@ where
             tol,
             x: Array1::<T>::zeros(problem_size),
             b: Array1::<T>::zeros(problem_size),
-            H: Array2::<T>::zeros((m + 1, m)),
             //s: Array1::<T>::zeros(m+1),
             cs: Array1::<T>::zeros(m + 1),
             sn: Array1::<T>::zeros(m + 1),
             beta: T::zero(),
             resid: T::zero(),
             r: Array1::<T>::zeros(problem_size),
-            v: (0..=m).map(|_| Array1::<T>::zeros(problem_size)).collect(),
             converged: false,
+            arn: ArnoldiSpace::empty(),
         }
     }
 
