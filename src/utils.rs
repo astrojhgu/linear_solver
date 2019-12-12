@@ -75,8 +75,12 @@ impl<T> ComplexOrReal<T> for T where
 {
 }
 
-impl ComplexOrReal<f64> for num_complex::Complex<f64> {}
-impl ComplexOrReal<f32> for num_complex::Complex<f32> {}
+impl<U> ComplexOrReal<U> for num_complex::Complex<U>
+where
+    U: Float + Default,
+    num_complex::Complex<U>: ScalarOperand,
+{
+}
 
 pub fn norm<T, U>(x: ArrayView1<T>) -> U
 where
