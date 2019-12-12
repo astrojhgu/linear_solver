@@ -11,12 +11,13 @@ use crate::utils::norm;
 use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
 use crate::utils::Number;
 
-pub struct GmresState<T>
+pub struct GmresState<T,U>
 where
-    T: Number<T>+Float+std::fmt::Debug,
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug,
 {
     pub m: usize,
-    pub tol: T,
+    pub tol: U,
     pub x: Array1<T>,
     pub b: Array1<T>,
     //pub H: Array2<T>,
@@ -24,26 +25,27 @@ where
     pub cs: Array1<T>,
     pub sn: Array1<T>,
     //pub av: Array1<T>,
-    pub beta: T,
-    pub resid: T,
+    pub beta: U,
+    pub resid: U,
     pub r: Array1<T>,
     //pub v: Vec<Array1<T>>,
     pub converged: bool,
-    pub arn: ArnoldiSpace<T,T>,
+    pub arn: ArnoldiSpace<T,U>,
 }
 
-pub fn gmres1<T>(
-    ags: &mut GmresState<T>,
+pub fn gmres1<T,U>(
+    ags: &mut GmresState<T,U>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<T>+Float+std::fmt::Debug
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug,
 {
     //ags.v[0] = &ags.r / ags.beta;
     ags.arn.reset(ags.r.view());
     //println!("v={:?}", v);
     let mut s = Array1::<T>::zeros(ags.m + 1);
-    s[0] = ags.beta;
+    s[0] = <T as From<U>>::from(ags.beta);
 
     let mut i = 0;
     while i < ags.m {
@@ -113,11 +115,12 @@ pub fn gmres1<T>(
     ags.converged = false;
 }
 
-impl<T> GmresState<T>
+impl<T,U> GmresState<T,U>
 where
-    T: Number<T>+Float+std::fmt::Debug
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug,
 {
-    pub fn create(problem_size: usize, m: usize, tol: T) -> GmresState<T> {
+    pub fn create(problem_size: usize, m: usize, tol: U) -> GmresState<T,U> {
         GmresState {
             m,
             tol,
@@ -128,8 +131,8 @@ where
             cs: Array1::<T>::zeros(m + 1),
             sn: Array1::<T>::zeros(m + 1),
             //av: Array1::<T>::zeros(problem_size),
-            beta: T::zero(),
-            resid: T::zero(),
+            beta: U::zero(),
+            resid: U::zero(),
             r: Array1::<T>::zeros(problem_size),
             //v: (0..=m).map(|_| Array1::<T>::zeros(problem_size)).collect(),
             converged: false,
@@ -147,8 +150,8 @@ where
         let w = M(b.view());
         let normb = {
             let nb = norm(w.view());
-            if nb == T::zero() {
-                T::one()
+            if nb == U::zero() {
+                U::one()
             } else {
                 nb
             }
@@ -170,7 +173,7 @@ where
         b: ArrayView1<T>,
         M: &dyn Fn(ArrayView1<T>) -> Array1<T>,
         m: usize,
-        tol: T,
+        tol: U,
     ) -> Self {
         let mut result = Self::create(b.len(), m, tol);
         result.init(A, x, b, M);
