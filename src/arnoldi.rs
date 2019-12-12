@@ -42,6 +42,17 @@ where
         }
     }
 
+    pub fn empty()->ArnoldiSpace<T>{
+        ArnoldiSpace{
+            Q: Vec::new(),
+            H: Vec::new()
+        }
+    }
+
+    pub fn reset(&mut self, b: ArrayView1<T>){
+        *self=Self::new(b)
+    }
+
     pub fn iter(&mut self, A: &dyn Fn(ArrayView1<T>) -> Array1<T>)->std::result::Result<(), ArnoldiErr>{
         let m=self.Q[0].len();
         if self.Q.len()>=m{

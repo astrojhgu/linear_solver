@@ -54,3 +54,22 @@ where
     }
 }
 
+pub fn update2<T>(x: &mut Array1<T>, k: usize, h: &[Array1<T>], s: &Array1<T>, v: &[Array1<T>])
+where
+    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+{
+    let mut y = s.to_owned();
+    for i in (0..=k).rev() {
+        y[i] = y[i] / h[i][i];
+        if i > 0 {
+            for j in (0..i).rev() {
+                y[j] = y[j] - h[i][j] * y[i];
+            }
+        }
+    }
+
+    for j in 0..=k {
+        *x = &(*x) + &(&v[j] * y[j]);
+    }
+}
+
