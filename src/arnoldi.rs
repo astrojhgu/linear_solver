@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use crate::utils::{norm, HasAbs, Number};
+use crate::utils::{norm, HasAbs, ComplexOrReal};
 use ndarray::{s, Array1, Array2, ArrayView1};
 use num_traits::Float;
 use std::marker::PhantomData;
@@ -21,7 +21,7 @@ impl std::error::Error for ArnoldiErr {}
 
 pub struct ArnoldiSpace<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub Q: Vec<Array1<T>>,
@@ -31,7 +31,7 @@ where
 
 impl<T, U> ArnoldiSpace<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub fn new(b: ArrayView1<T>) -> ArnoldiSpace<T, U> {

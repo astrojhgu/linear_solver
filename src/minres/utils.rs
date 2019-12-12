@@ -3,12 +3,12 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
 
-use crate::utils::{HasAbs, Number};
+use crate::utils::{HasAbs, ComplexOrReal};
 use ndarray::{Array1, Array2};
 use num_traits::Float;
 pub fn apply_plane_rotation<T, U>(mut dx: T, mut dy: T, cs: T, sn: T) -> (T, T)
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
 {
     let temp = cs.conj() * dx + sn.conj() * dy;
@@ -19,7 +19,7 @@ where
 
 pub fn generate_plane_rotation<T, U>(dx: T, dy: T) -> (T, T)
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
 {
     /*
@@ -49,7 +49,7 @@ where
 
 pub fn update<T, U>(x: &mut Array1<T>, k: usize, h: &Array2<T>, s: &Array1<T>, v: &[Array1<T>])
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
 {
     let mut y = s.to_owned();
@@ -69,7 +69,7 @@ where
 
 pub fn update2<T, U>(x: &mut Array1<T>, k: usize, h: &[Array1<T>], s: &Array1<T>, v: &[Array1<T>])
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
 {
     let mut y = s.to_owned();

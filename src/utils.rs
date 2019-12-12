@@ -3,7 +3,7 @@ use ndarray::{Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::{Float, Num};
 use std::ops::Neg;
 
-pub trait Number<U: Float>:
+pub trait ComplexOrReal<U: Float>:
     HasAbs<Output = U>
     + HasConj
     + ScalarOperand
@@ -70,17 +70,17 @@ where
     }
 }
 
-impl<T> Number<T> for T where
+impl<T> ComplexOrReal<T> for T where
     T: Float + HasAbs<Output = T> + HasConj + ScalarOperand + Default + Copy + Neg<Output = Self>
 {
 }
 
-impl Number<f64> for num_complex::Complex<f64> {}
-impl Number<f32> for num_complex::Complex<f32> {}
+impl ComplexOrReal<f64> for num_complex::Complex<f64> {}
+impl ComplexOrReal<f32> for num_complex::Complex<f32> {}
 
 pub fn norm<T, U>(x: ArrayView1<T>) -> U
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
 {
     //x.dot(&x).sqrt()
@@ -93,7 +93,7 @@ where
 
 pub fn sprs2dense<T>(s: &sprs::CsMat<T>) -> Array2<T>
 where
-    T: Number<T> + Float,
+    T: ComplexOrReal<T> + Float,
 {
     let mut result = Array2::zeros((s.rows(), s.cols()));
     for (&x, (i, j)) in s.iter() {
@@ -107,7 +107,7 @@ pub fn sp_mul_a1<U, T, I, IptrStorage, IndStorage, DataStorage>(
     b: ArrayView1<T>,
 ) -> Array1<T>
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
     I: sprs::SpIndex + ndarray::NdIndex<ndarray::Dim<[usize; 1]>>,
     IptrStorage: std::ops::Deref<Target = [I]>,
@@ -126,7 +126,7 @@ pub fn sp_mul_a2<U, T, I, IptrStorage, IndStorage, DataStorage>(
     B: ArrayView2<T>,
 ) -> Array2<T>
 where
-    T: Number<U>,
+    T: ComplexOrReal<U>,
     U: Float,
     I: sprs::SpIndex + ndarray::NdIndex<ndarray::Dim<[usize; 1]>> + Into<usize>,
     IptrStorage: std::ops::Deref<Target = [I]>,

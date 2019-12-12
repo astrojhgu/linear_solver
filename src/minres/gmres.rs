@@ -8,11 +8,11 @@ use num_traits::Float;
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::arnoldi::ArnoldiSpace;
 use crate::utils::norm;
-use crate::utils::Number;
+use crate::utils::ComplexOrReal;
 
 pub struct GmresState<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub m: usize,
@@ -37,7 +37,7 @@ pub fn gmres1<T, U>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     //ags.v[0] = &ags.r / ags.beta;
@@ -114,7 +114,7 @@ pub fn gmres1<T, U>(
 
 impl<T, U> GmresState<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub fn create(problem_size: usize, m: usize, tol: U) -> GmresState<T, U> {

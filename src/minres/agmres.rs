@@ -8,10 +8,10 @@ use num_traits::Float;
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::arnoldi::ArnoldiSpace;
 use crate::utils::norm;
-use crate::utils::Number;
+use crate::utils::ComplexOrReal;
 pub struct AGmresState<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub m: usize,
@@ -40,7 +40,7 @@ pub fn agmres1<T, U>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     //println!("{:?}", ags.beta);
@@ -142,7 +142,7 @@ pub fn agmres<T, U>(
     tol: U,
 ) -> AGmresState<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     let mut ags = AGmresState::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
@@ -179,7 +179,7 @@ where
 
 impl<T, U> AGmresState<T, U>
 where
-    T: Number<U> + std::fmt::Debug,
+    T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float + std::fmt::Debug,
 {
     pub fn create(

@@ -1,13 +1,13 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(non_snake_case)]
 use crate::qr::givens_rotation;
-use crate::utils::Number;
+use crate::utils::ComplexOrReal;
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use num_traits::Float;
 
 pub fn back_sub<T>(u: ArrayView2<T>, b: ArrayView1<T>) -> Array1<T>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let mut x = Array1::zeros(b.len());
 
@@ -25,7 +25,7 @@ where
 }
 pub fn solve<T>(A: ArrayView2<T>, b: ArrayView1<T>) -> Array1<T>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let (q, r) = givens_rotation(A);
 

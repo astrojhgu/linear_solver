@@ -2,13 +2,13 @@
 #![allow(non_snake_case)]
 use crate::qr::givens_rotation as qrdecomp;
 use crate::utils::norm;
-use crate::utils::Number;
+use crate::utils::ComplexOrReal;
 use ndarray::{s, Array1, Array2, ArrayView2};
 use num_complex::Complex;
 use num_traits::Float;
 pub fn hessenberg_reduction<T>(A: ArrayView2<T>) -> Array2<T>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let two = T::one() + T::one();
     let n = A.nrows();
@@ -39,7 +39,7 @@ where
 
 pub fn wilkinson_shift<T>(a: T, b: T, c: T) -> T
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let two = T::one() + T::one();
     let d = (a - c) / two;
@@ -48,7 +48,7 @@ where
 
 pub fn qr_with_shift<T>(A: ArrayView2<T>, th: T) -> Array2<T>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let n = A.nrows();
     if n == 1 {
@@ -70,7 +70,7 @@ where
 
 pub fn eigv2x2<T>(A: ArrayView2<T>) -> (Complex<T>, Complex<T>)
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let a = A[(0, 0)];
     let b = A[(0, 1)];
@@ -89,7 +89,7 @@ where
 
 pub fn qr_naive_iter<T>(A: ArrayView2<T>, niter: usize) -> Array2<T>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let mut A = A.to_owned();
     for _i in 0..niter {
@@ -101,7 +101,7 @@ where
 
 pub fn qr_naive<T>(A: ArrayView2<T>, niter: usize, tol: T) -> Vec<Complex<T>>
 where
-    T: Number<T> + Float + std::fmt::Debug,
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
     let (mut q, mut r) = qrdecomp(A);
     for _i in 0..niter {
