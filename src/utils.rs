@@ -124,12 +124,13 @@ where
     result
 }
 
-pub fn sp_mul_a1<T, I, IptrStorage, IndStorage, DataStorage>(
+pub fn sp_mul_a1<U, T, I, IptrStorage, IndStorage, DataStorage>(
     A: &sprs::CsMatBase<T, I, IptrStorage, IndStorage, DataStorage>,
     b: ArrayView1<T>,
 ) -> Array1<T>
 where
-    T: Number<T>+Float,
+    T: Number<U>,
+    U: Float, 
     I: sprs::SpIndex + ndarray::NdIndex<ndarray::Dim<[usize; 1]>>,
     IptrStorage: std::ops::Deref<Target = [I]>,
     IndStorage: std::ops::Deref<Target = [I]>,
@@ -142,12 +143,13 @@ where
     result
 }
 
-pub fn sp_mul_a2<T, I, IptrStorage, IndStorage, DataStorage>(
+pub fn sp_mul_a2<U, T, I, IptrStorage, IndStorage, DataStorage>(
     A: &sprs::CsMatBase<T, I, IptrStorage, IndStorage, DataStorage>,
     B: ArrayView2<T>,
 ) -> Array2<T>
 where
-    T: Number<T>+Float,
+    T: Number<U>,
+    U: Float,
     I: sprs::SpIndex + ndarray::NdIndex<ndarray::Dim<[usize; 1]>> + Into<usize>,
     IptrStorage: std::ops::Deref<Target = [I]>,
     IndStorage: std::ops::Deref<Target = [I]>,

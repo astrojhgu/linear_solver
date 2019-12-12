@@ -5,13 +5,13 @@
 use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2};
 use num_traits::Float;
-use crate::utils::Number;
+use crate::utils::{Number, HasSqrt};
 pub fn apply_plane_rotation<T,U>(mut dx: T, mut dy: T, cs: T, sn: T) -> (T, T)
 where
     T: Number<U>,
     U: Float
 {
-    let temp = cs * dx + sn * dy;
+    let temp = cs.conj() * dx + sn.conj() * dy;
     dy = -sn * dx + cs * dy;
     dx = temp;
     (dx, dy)
@@ -22,6 +22,7 @@ where
     T: Number<U>,
     U: Float
 {
+    /*
     if dy == T::zero() {
         (T::one(), T::zero())
     } else if dy.abs() > dx.abs() {
@@ -34,7 +35,12 @@ where
         let cs = T::one() / (T::one() + temp * temp).sqrt();
         let sn = temp * cs;
         (cs, sn)
-    }
+    }*/
+
+    let temp=HasSqrt::sqrt(&(<T as From<U>>::from(dx.abs().powi(2))+dy*dy));
+    let s=dy/temp;
+    let c=dx/temp;
+    (c,s)
 }
 
 pub fn update<T,U>(x: &mut Array1<T>, k: usize, h: &Array2<T>, s: &Array1<T>, v: &[Array1<T>])
