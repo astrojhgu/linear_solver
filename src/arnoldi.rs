@@ -3,7 +3,7 @@
 use num_traits::Float;
 use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1, s};
-use crate::utils::{norm, HasConj};
+use crate::utils::{norm, Number};
 
 #[derive(Debug)]
 pub enum ArnoldiErr{
@@ -23,7 +23,7 @@ impl std::error::Error for ArnoldiErr{
 
 pub struct ArnoldiSpace<T>
 where 
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug
 
 {
     pub Q: Vec<Array1<T>>,
@@ -32,7 +32,7 @@ where
 
 impl<T> ArnoldiSpace<T>
 where 
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug
 {
     pub fn new(b: ArrayView1<T>)->ArnoldiSpace<T>{
         let q=&b/norm(b);

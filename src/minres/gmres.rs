@@ -9,11 +9,11 @@ use num_traits::Float;
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::utils::norm;
 use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
-use crate::utils::HasConj;
+use crate::utils::Number;
 
 pub struct GmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug,
 {
     pub m: usize,
     pub tol: T,
@@ -37,7 +37,7 @@ pub fn gmres1<T>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug
 {
     //ags.v[0] = &ags.r / ags.beta;
     ags.arn.reset(ags.r.view());
@@ -115,7 +115,7 @@ pub fn gmres1<T>(
 
 impl<T> GmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug
 {
     pub fn create(problem_size: usize, m: usize, tol: T) -> GmresState<T> {
         GmresState {

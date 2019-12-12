@@ -3,17 +3,17 @@
 
 use ndarray::{s, Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::Float;
-use crate::utils::norm;
+use crate::utils::{Number,norm};
 fn copy_sign<T>(x: T, y: T) -> T
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     y.signum() * x.abs()
 }
 
 fn givens_rotation_matrix_entries<T>(a: T, b: T) -> (T, T)
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     let r = a.hypot(b);
     let c = a / r;
@@ -33,7 +33,7 @@ fn tril_indices(nrows: usize, ncols: usize) -> Vec<(usize, usize)> {
 
 pub fn givens_rotation<T>(mat: ArrayView2<T>) -> (Array2<T>, Array2<T>)
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     let nrows = mat.nrows();
     let ncols = mat.ncols();
@@ -56,7 +56,7 @@ where
 
 fn outer<T>(x: ArrayView1<T>, y: ArrayView1<T>) -> Array2<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     let mut result = unsafe { Array2::uninitialized((x.len(), y.len())) };
     for i in 0..x.len() {
@@ -69,7 +69,7 @@ where
 
 pub fn householder_reflection<T>(mat: ArrayView2<T>) -> (Array2<T>, Array2<T>)
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     let nrows = mat.nrows();
     //let ncols = mat.ncols();
@@ -95,7 +95,7 @@ where
 
 pub fn gram_schmidt_process<T>(mat: ArrayView2<T>) -> (Array2<T>, Array2<T>)
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+    T: Number<T>+Float+std::fmt::Debug
 {
     let nrows = mat.nrows();
     let ncols = mat.ncols();

@@ -4,14 +4,14 @@ use num_traits::Float;
 use ndarray::{Array1, Array2, ArrayView2, ScalarOperand, s};
 use num_complex::Complex;
 use crate::utils::norm;
-
+use crate::utils::Number;
 pub fn hessenberg_reduction<T>(A: ArrayView2<T>)->Array2<T>
 where 
-T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+T: Number<T>+Float+std::fmt::Debug,{
+    let two=T::one()+T::one();
     let mut n0=0;
     let n=A.nrows();
     let mut A=A.to_owned();
-    let two=T::from(2).unwrap();
     for n0 in 0..n-2{
         let a1=A.slice(s![n0+1..,n0]).to_owned();
         let mut e1=Array1::zeros(n-n0-1);
@@ -37,15 +37,16 @@ T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
 
 pub fn wilkinson_shift<T>(a: T, b: T, c: T)->T
 where 
-T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
-    let d=(a-c)/T::from(2).unwrap();
+T: Number<T>+Float+std::fmt::Debug,{
+    let two=T::one()+T::one();
+    let d=(a-c)/two;
     c-d.signum()*b.powi(2)/(d.abs()+(d.powi(2)+b.powi(2)).sqrt())
 }
 
 
 pub fn qr_with_shift<T>(A: ArrayView2<T>, th: T)->Array2<T>
 where 
-T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+T: Number<T>+Float+std::fmt::Debug,{
     let n=A.nrows();
     if n==1{
         return A.to_owned();
@@ -54,7 +55,7 @@ T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
     let I=Array2::eye(n);
     let mut A=hessenberg_reduction(A);
     //let mut A=A.to_owned();
-    while(A[(n-1, n-2)].abs()>th){
+    while A[(n-1, n-2)].abs()>th{
         println!("{:?}", A[(n-1, n-2)]);
         let mu=wilkinson_shift(A[(n-2, n-2)], A[(n-1,n-1)], A[(n-2, n-1)]);
         //let mu=T::zero();
@@ -67,7 +68,7 @@ T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
 
 pub fn eigv2x2<T>(A:ArrayView2<T>)->(Complex<T>, Complex<T>)
 where 
-   T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+   T: Number<T>+Float+std::fmt::Debug
 {
     let a=A[(0,0)];
     let b=A[(0,1)];
@@ -85,7 +86,8 @@ where
 }
 
 pub fn qr_naive_iter<T>(A:ArrayView2<T>, niter:usize)->Array2<T>
-where T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
+where 
+T: Number<T>+Float+std::fmt::Debug{
     let(mut q,mut r)=qrdecomp(A);
     let mut A=A.to_owned();
     for i in 0..niter{
@@ -96,7 +98,7 @@ where T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,{
 }
 
 pub fn qr_naive<T>(A:ArrayView2<T>, niter:usize, tol: T)->Vec<Complex<T>>
-where T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug,
+where T: Number<T>+Float+std::fmt::Debug,
 {
     let(mut q,mut r)=qrdecomp(A);
     for i in 0..niter{

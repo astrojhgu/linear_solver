@@ -9,10 +9,10 @@ use num_traits::Float;
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::utils::norm;
 use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
-use crate::utils::HasConj;
+use crate::utils::Number;
 pub struct AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug,
 {
     pub m: usize,
     pub m_max: usize,
@@ -40,7 +40,7 @@ pub fn agmres1<T>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug,
 {
     //println!("{:?}", ags.beta);
     if ags.beta == T::zero() {
@@ -143,7 +143,7 @@ pub fn agmres<T>(
     tol: T,
 ) -> AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug+ HasConj,
+    T: Number<T>+Float+std::fmt::Debug,
 {
     let mut ags = AGmresState::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
 
@@ -179,7 +179,7 @@ where
 
 impl<T> AGmresState<T>
 where
-    T: Copy + Default + Float + ScalarOperand + 'static + std::fmt::Debug + HasConj,
+    T: Number<T>+Float+std::fmt::Debug,
 {
     pub fn create(
         problem_size: usize,
