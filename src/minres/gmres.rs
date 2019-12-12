@@ -2,19 +2,18 @@
 #![allow(non_snake_case)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
-use ndarray::ScalarOperand;
-use ndarray::{Array1, Array2, ArrayView1};
+use ndarray::{Array1, ArrayView1};
 use num_traits::Float;
 
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
+use crate::arnoldi::ArnoldiSpace;
 use crate::utils::norm;
-use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
 use crate::utils::Number;
 
-pub struct GmresState<T,U>
+pub struct GmresState<T, U>
 where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug,
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     pub m: usize,
     pub tol: U,
@@ -30,16 +29,16 @@ where
     pub r: Array1<T>,
     //pub v: Vec<Array1<T>>,
     pub converged: bool,
-    pub arn: ArnoldiSpace<T,U>,
+    pub arn: ArnoldiSpace<T, U>,
 }
 
-pub fn gmres1<T,U>(
-    ags: &mut GmresState<T,U>,
+pub fn gmres1<T, U>(
+    ags: &mut GmresState<T, U>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug,
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     //ags.v[0] = &ags.r / ags.beta;
     ags.arn.reset(ags.r.view());
@@ -49,26 +48,28 @@ pub fn gmres1<T,U>(
 
     let mut i = 0;
     while i < ags.m {
-        ags.arn.iter(&|x|{
-            let av=A(x);
-            if let Some(ref M)=M{
-                M(av.view())
-            }else{
-                av
-            }
-        }).unwrap();
+        ags.arn
+            .iter(&|x| {
+                let av = A(x);
+                if let Some(ref M) = M {
+                    M(av.view())
+                } else {
+                    av
+                }
+            })
+            .unwrap();
 
         for k in 0..i {
             let (dx, dy) =
-                apply_plane_rotation(ags.arn.H[i][k], ags.arn.H[i][k+1], ags.cs[k], ags.sn[k]);
+                apply_plane_rotation(ags.arn.H[i][k], ags.arn.H[i][k + 1], ags.cs[k], ags.sn[k]);
             //ags.H[(k, i)] = dx;
             //ags.H[(k + 1, i)] = dy;
-            ags.arn.H[i][k]=dx;
-            ags.arn.H[i][k+1]=dy;
+            ags.arn.H[i][k] = dx;
+            ags.arn.H[i][k + 1] = dy;
         }
 
         //let (cs1, sn1) = generate_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)]);
-        let (cs1, sn1) = generate_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1]);
+        let (cs1, sn1) = generate_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i + 1]);
         ags.cs[i] = cs1;
         ags.sn[i] = sn1;
         {
@@ -76,7 +77,7 @@ pub fn gmres1<T,U>(
                 //apply_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)], ags.cs[i], ags.sn[i]);
                 apply_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1], ags.cs[i], ags.sn[i]);
             ags.arn.H[i][i] = dx;
-            ags.arn.H[i][i+1] = dy;
+            ags.arn.H[i][i + 1] = dy;
         }
         {
             let (dx, dy) = apply_plane_rotation(s[i], s[i + 1], ags.cs[i], ags.sn[i]);
@@ -102,11 +103,7 @@ pub fn gmres1<T,U>(
     update2(&mut ags.x, i - 1, &ags.arn.H, &s, &ags.arn.Q[..]);
     //ags.r = ;
     let w = &ags.b - &A(ags.x.view());
-    ags.r=if let Some(ref M)=M{
-        M(w.view())
-    }else{
-        w
-    };
+    ags.r = if let Some(ref M) = M { M(w.view()) } else { w };
     ags.beta = norm(ags.r.view());
     if ags.resid.powi(2) < ags.tol {
         ags.converged = true;
@@ -115,12 +112,12 @@ pub fn gmres1<T,U>(
     ags.converged = false;
 }
 
-impl<T,U> GmresState<T,U>
+impl<T, U> GmresState<T, U>
 where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug,
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
-    pub fn create(problem_size: usize, m: usize, tol: U) -> GmresState<T,U> {
+    pub fn create(problem_size: usize, m: usize, tol: U) -> GmresState<T, U> {
         GmresState {
             m,
             tol,
@@ -136,7 +133,7 @@ where
             r: Array1::<T>::zeros(problem_size),
             //v: (0..=m).map(|_| Array1::<T>::zeros(problem_size)).collect(),
             converged: false,
-            arn: ArnoldiSpace::empty()
+            arn: ArnoldiSpace::empty(),
         }
     }
 

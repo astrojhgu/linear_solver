@@ -1,18 +1,17 @@
+#![allow(non_snake_case)]
 extern crate linear_solver;
-use linear_solver::io::RawMM;
 use linear_solver::arnoldi::ArnoldiSpace;
-use linear_solver::eigen::qr as qr;
-use ndarray::{s};
-pub fn main(){
-    let Am=RawMM::<f64>::from_file("A.mtx").to_array2();
+use linear_solver::io::RawMM;
+pub fn main() {
+    let Am = RawMM::<f64>::from_file("A.mtx").to_array2();
 
-    let A=|x: ndarray::ArrayView1<f64>| Am.dot(&x);
+    let A = |x: ndarray::ArrayView1<f64>| Am.dot(&x);
 
-    let b=RawMM::<f64>::from_file("b.mtx").to_array1();
-    let mut arn=ArnoldiSpace::new(b.view());
+    let b = RawMM::<f64>::from_file("b.mtx").to_array1();
+    let mut arn = ArnoldiSpace::new(b.view());
     //while let Ok(())=arn.iter(&A){
     //}
-    for i in 0..15{
+    for _i in 0..15 {
         arn.iter(&A).unwrap();
     }
 

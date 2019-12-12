@@ -2,18 +2,17 @@
 #![allow(non_snake_case)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
-use ndarray::ScalarOperand;
-use ndarray::{Array1, Array2, ArrayView1};
+use ndarray::{Array1, ArrayView1};
 use num_traits::Float;
 
 use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
+use crate::arnoldi::ArnoldiSpace;
 use crate::utils::norm;
-use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
 use crate::utils::Number;
-pub struct AGmresState<T,U>
+pub struct AGmresState<T, U>
 where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     pub m: usize,
     pub m_max: usize,
@@ -33,16 +32,16 @@ where
     pub r: Array1<T>,
     //pub v: Vec<Array1<T>>,
     pub converged: bool,
-    pub arn: ArnoldiSpace<T,U>,
+    pub arn: ArnoldiSpace<T, U>,
 }
 
-pub fn agmres1<T,U>(
-    ags: &mut AGmresState<T,U>,
+pub fn agmres1<T, U>(
+    ags: &mut AGmresState<T, U>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     //println!("{:?}", ags.beta);
     if ags.beta == U::zero() {
@@ -57,25 +56,27 @@ pub fn agmres1<T,U>(
 
     let mut i = 0;
     while i < ags.m {
-        ags.arn.iter(&|x|{
-            let av=A(x);
-            if let Some(ref M)=M{
-                M(av.view())
-            }else{
-                av
-            }
-        }).unwrap();
+        ags.arn
+            .iter(&|x| {
+                let av = A(x);
+                if let Some(ref M) = M {
+                    M(av.view())
+                } else {
+                    av
+                }
+            })
+            .unwrap();
 
         for k in 0..i {
             let (dx, dy) =
-                apply_plane_rotation(ags.arn.H[i][k], ags.arn.H[i][k+1], ags.cs[k], ags.sn[k]);
+                apply_plane_rotation(ags.arn.H[i][k], ags.arn.H[i][k + 1], ags.cs[k], ags.sn[k]);
             //ags.H[(k, i)] = dx;
             //ags.H[(k + 1, i)] = dy;
-            ags.arn.H[i][k]=dx;
-            ags.arn.H[i][k+1]=dy;
+            ags.arn.H[i][k] = dx;
+            ags.arn.H[i][k + 1] = dy;
         }
 
-        let (cs1, sn1) = generate_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1]);
+        let (cs1, sn1) = generate_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i + 1]);
         ags.cs[i] = cs1;
         ags.sn[i] = sn1;
         {
@@ -83,7 +84,7 @@ pub fn agmres1<T,U>(
                 //apply_plane_rotation(ags.H[(i, i)], ags.H[(i + 1, i)], ags.cs[i], ags.sn[i]);
                 apply_plane_rotation(ags.arn.H[i][i], ags.arn.H[i][i+1], ags.cs[i], ags.sn[i]);
             ags.arn.H[i][i] = dx;
-            ags.arn.H[i][i+1] = dy;
+            ags.arn.H[i][i + 1] = dy;
         }
         {
             let (dx, dy) = apply_plane_rotation(s[i], s[i + 1], ags.cs[i], ags.sn[i]);
@@ -109,12 +110,8 @@ pub fn agmres1<T,U>(
     update2(&mut ags.x, i - 1, &ags.arn.H, &s, &ags.arn.Q[..]);
     //ags.r = ;
     let w = &ags.b - &A(ags.x.view());
-    ags.r=if let Some(M)=M{
-        M(w.view())
-    }else{
-        w
-    };
-    
+    ags.r = if let Some(M) = M { M(w.view()) } else { w };
+
     //ags.r = M(w.view());
     ags.beta = norm(ags.r.view());
     if ags.resid.powi(2) < ags.tol {
@@ -132,7 +129,7 @@ pub fn agmres1<T,U>(
     ags.converged = false;
 }
 
-pub fn agmres<T,U>(
+pub fn agmres<T, U>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     x: ArrayView1<T>,
     b: ArrayView1<T>,
@@ -143,10 +140,10 @@ pub fn agmres<T,U>(
     m_step: usize,
     cf: U,
     tol: U,
-) -> AGmresState<T,U>
+) -> AGmresState<T, U>
 where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     let mut ags = AGmresState::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
 
@@ -180,10 +177,10 @@ where
     ags
 }
 
-impl<T,U> AGmresState<T,U>
+impl<T, U> AGmresState<T, U>
 where
-    T: Number<U>+std::fmt::Debug,
-    U: Float+std::fmt::Debug
+    T: Number<U> + std::fmt::Debug,
+    U: Float + std::fmt::Debug,
 {
     pub fn create(
         problem_size: usize,
@@ -193,7 +190,7 @@ where
         m_step: usize,
         cf: U,
         tol: U,
-    ) -> AGmresState<T,U> {
+    ) -> AGmresState<T, U> {
         let m_max = if m_max > problem_size {
             problem_size
         } else {
@@ -226,7 +223,7 @@ where
         b: ArrayView1<T>,
         M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
     ) {
-        let w=M.map_or(b.to_owned(),|m|{m(b.view())});
+        let w = M.map_or(b.to_owned(), |m| m(b.view()));
         let normb = {
             let nb = norm(w.view());
             if nb == U::zero() {
@@ -239,12 +236,8 @@ where
         self.x = x.to_owned();
         self.r = A(x.view());
         let w = &b - &self.r;
-        self.r= if let Some(M)=M{
-            M(w.view())
-        }else{
-            w
-        };
-        
+        self.r = if let Some(M) = M { M(w.view()) } else { w };
+
         self.beta = norm(self.r.view());
         self.resid = self.beta / normb;
         self.converged = false;

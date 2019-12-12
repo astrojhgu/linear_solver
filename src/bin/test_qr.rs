@@ -1,5 +1,5 @@
-use linear_solver::qr::{givens_rotation, gram_schmidt_process, householder_reflection};
-use ndarray::{array, Array2};
+use linear_solver::qr::gram_schmidt_process;
+use ndarray::array;
 
 pub fn main() {
     let arr = array![[1.0, 2.0, 3.0], [3.0, 4.0, 3.0], [4.0, 3.0, 2.0]];

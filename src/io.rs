@@ -86,10 +86,8 @@ impl<T> RawEntry<T>
 where
     T: Num + Copy + std::fmt::Debug,
 {
-    pub fn new(i: usize, j: usize, value: T)->RawEntry<T>{
-        RawEntry{
-            i, j, value
-        }
+    pub fn new(i: usize, j: usize, value: T) -> RawEntry<T> {
+        RawEntry { i, j, value }
     }
     pub fn symm(&self) -> RawEntry<T> {
         RawEntry {
