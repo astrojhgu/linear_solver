@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-use crate::utils::{norm, HasAbs, ComplexOrReal};
+use crate::utils::{norm, ComplexOrReal, HasAbs};
 use ndarray::{s, Array1, Array2, ArrayView1};
 use num_traits::Float;
 use std::marker::PhantomData;

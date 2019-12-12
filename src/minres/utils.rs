@@ -3,7 +3,7 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::too_many_arguments)]
 
-use crate::utils::{HasAbs, ComplexOrReal};
+use crate::utils::{ComplexOrReal, HasAbs};
 use ndarray::{Array1, Array2};
 use num_traits::Float;
 pub fn apply_plane_rotation<T, U>(mut dx: T, mut dy: T, cs: T, sn: T) -> (T, T)
