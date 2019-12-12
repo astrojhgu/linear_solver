@@ -29,7 +29,7 @@ where
     pub r: Array1<T>,
     //pub v: Vec<Array1<T>>,
     pub converged: bool,
-    pub arn: ArnoldiSpace<T>,
+    pub arn: ArnoldiSpace<T,T>,
 }
 
 pub fn gmres1<T>(

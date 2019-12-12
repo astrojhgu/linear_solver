@@ -3,7 +3,8 @@
 use num_traits::Float;
 use ndarray::ScalarOperand;
 use ndarray::{Array1, Array2, ArrayView1, s};
-use crate::utils::{norm, Number};
+use crate::utils::{norm, Number, HasAbs};
+use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub enum ArnoldiErr{
@@ -21,31 +22,37 @@ impl std::fmt::Display for ArnoldiErr{
 impl std::error::Error for ArnoldiErr{
 }
 
-pub struct ArnoldiSpace<T>
+pub struct ArnoldiSpace<T, U>
 where 
-    T: Number<T>+Float+std::fmt::Debug
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug,
 
 {
     pub Q: Vec<Array1<T>>,
     pub H: Vec<Array1<T>>,
+    phantom: PhantomData<U>,
+
 }
 
-impl<T> ArnoldiSpace<T>
+impl<T,U> ArnoldiSpace<T,U>
 where 
-    T: Number<T>+Float+std::fmt::Debug
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug,
 {
-    pub fn new(b: ArrayView1<T>)->ArnoldiSpace<T>{
-        let q=&b/norm(b);
+    pub fn new(b: ArrayView1<T>)->ArnoldiSpace<T,U>{
+        let q=&b/<T as From<U>>::from(norm(b));
         ArnoldiSpace{
             Q: vec![q],
             H: Vec::new(),
+            phantom: PhantomData,
         }
     }
 
-    pub fn empty()->ArnoldiSpace<T>{
+    pub fn empty()->ArnoldiSpace<T,U>{
         ArnoldiSpace{
             Q: Vec::new(),
-            H: Vec::new()
+            H: Vec::new(),
+            phantom: PhantomData,
         }
     }
 
@@ -67,9 +74,9 @@ where
             self.H[k][j]=self.Q[j].map(|&x|{x.conj()}).dot(&v);
             v=&v-&(&self.Q[j]*self.H[k][j]);
         }
-        self.H[k][k+1]=norm(v.view());
+        self.H[k][k+1]=<T as From<U>>::from(norm(v.view()));
         let q=v/self.H[k][k+1];
-        if q.iter().all(|x|x.is_finite()){
+        if q.iter().all(|x| HasAbs::abs(x).is_finite()){
             self.Q.push(q);
             Result::Ok(())
         }else{

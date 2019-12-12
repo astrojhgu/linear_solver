@@ -10,16 +10,17 @@ use super::utils::{apply_plane_rotation, generate_plane_rotation, update2};
 use crate::utils::norm;
 use crate::arnoldi::{ArnoldiSpace, ArnoldiErr};
 use crate::utils::Number;
-pub struct AGmresState<T>
+pub struct AGmresState<T,U>
 where
-    T: Number<T>+Float+std::fmt::Debug,
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug
 {
     pub m: usize,
     pub m_max: usize,
     pub m_min: usize,
     pub m_step: usize,
-    pub cf: T,
-    pub tol: T,
+    pub cf: U,
+    pub tol: U,
     pub x: Array1<T>,
     pub b: Array1<T>,
     //pub H: Array2<T>,
@@ -27,30 +28,31 @@ where
     pub cs: Array1<T>,
     pub sn: Array1<T>,
     //pub av: Array1<T>,
-    pub beta: T,
-    pub resid: T,
+    pub beta: U,
+    pub resid: U,
     pub r: Array1<T>,
     //pub v: Vec<Array1<T>>,
     pub converged: bool,
-    pub arn: ArnoldiSpace<T>,
+    pub arn: ArnoldiSpace<T,U>,
 }
 
-pub fn agmres1<T>(
-    ags: &mut AGmresState<T>,
+pub fn agmres1<T,U>(
+    ags: &mut AGmresState<T,U>,
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     M: Option<&dyn Fn(ArrayView1<T>) -> Array1<T>>,
 ) where
-    T: Number<T>+Float+std::fmt::Debug,
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug
 {
     //println!("{:?}", ags.beta);
-    if ags.beta == T::zero() {
+    if ags.beta == U::zero() {
         ags.converged = true;
         return;
     }
     //ags.v[0] = &ags.r / ags.beta;
     ags.arn.reset(ags.r.view());
     let mut s = Array1::<T>::zeros(ags.m + 1);
-    s[0] = ags.beta;
+    s[0] = <T as From<U>>::from(ags.beta);
     let r1 = ags.beta;
 
     let mut i = 0;
@@ -130,7 +132,7 @@ pub fn agmres1<T>(
     ags.converged = false;
 }
 
-pub fn agmres<T>(
+pub fn agmres<T,U>(
     A: &dyn Fn(ArrayView1<T>) -> Array1<T>,
     x: ArrayView1<T>,
     b: ArrayView1<T>,
@@ -139,11 +141,12 @@ pub fn agmres<T>(
     m_max: usize,
     m_min: usize,
     m_step: usize,
-    cf: T,
-    tol: T,
-) -> AGmresState<T>
+    cf: U,
+    tol: U,
+) -> AGmresState<T,U>
 where
-    T: Number<T>+Float+std::fmt::Debug,
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug
 {
     let mut ags = AGmresState::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
 
@@ -177,9 +180,10 @@ where
     ags
 }
 
-impl<T> AGmresState<T>
+impl<T,U> AGmresState<T,U>
 where
-    T: Number<T>+Float+std::fmt::Debug,
+    T: Number<U>+std::fmt::Debug,
+    U: Float+std::fmt::Debug
 {
     pub fn create(
         problem_size: usize,
@@ -187,9 +191,9 @@ where
         m_max: usize,
         m_min: usize,
         m_step: usize,
-        cf: T,
-        tol: T,
-    ) -> AGmresState<T> {
+        cf: U,
+        tol: U,
+    ) -> AGmresState<T,U> {
         let m_max = if m_max > problem_size {
             problem_size
         } else {
@@ -207,8 +211,8 @@ where
             //s: Array1::<T>::zeros(m+1),
             cs: Array1::<T>::zeros(m + 1),
             sn: Array1::<T>::zeros(m + 1),
-            beta: T::zero(),
-            resid: T::zero(),
+            beta: U::zero(),
+            resid: U::zero(),
             r: Array1::<T>::zeros(problem_size),
             converged: false,
             arn: ArnoldiSpace::empty(),
@@ -225,8 +229,8 @@ where
         let w=M.map_or(b.to_owned(),|m|{m(b.view())});
         let normb = {
             let nb = norm(w.view());
-            if nb == T::zero() {
-                T::one()
+            if nb == U::zero() {
+                U::one()
             } else {
                 nb
             }
@@ -254,8 +258,8 @@ where
         m_max: usize,
         m_min: usize,
         m_step: usize,
-        cf: T,
-        tol: T,
+        cf: U,
+        tol: U,
     ) -> Self {
         let mut result = Self::create(b.len(), m_max, m_max, m_min, m_step, cf, tol);
         result.init(A, x, b, M);

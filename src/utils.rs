@@ -1,13 +1,17 @@
 #![allow(non_snake_case)]
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::{Float, Num};
+use std::ops::Neg;
 
 pub trait Number<U:Float>:
     HasAbs<Output=U> + 
     HasConj + HasSqrt +
     ScalarOperand + 
-    From<U> + 
+    Num +
+    Neg<Output=Self> +
+    From<U> +
     Copy + 
+    Clone +
     Default{
 }
 
@@ -89,18 +93,24 @@ where T:num_traits::Float{
 }
 
 impl<T> Number<T> for T
-where T:Float+HasAbs<Output=T>+HasConj+HasSqrt+ScalarOperand+Default+Copy
+where T:Float+HasAbs<Output=T>+HasConj+HasSqrt+ScalarOperand+Default+Copy+Neg<Output=Self>
 {}
 
 impl Number<f64> for num_complex::Complex<f64>{}
 impl Number<f32> for num_complex::Complex<f32>{}
 
 
-pub fn norm<T>(x: ArrayView1<T>) -> T
+pub fn norm<T,U>(x: ArrayView1<T>) -> U
 where
-    T: Number<T>+Float
+    T: Number<U>,
+    U: Float
 {
-    x.dot(&x).sqrt()
+    //x.dot(&x).sqrt()
+    let mut result=U::zero();
+    for &x1 in x.iter(){
+        result=result+x1.abs()*x1.abs();
+    }
+    result.sqrt()
 }
 
 pub fn sprs2dense<T>(s: &sprs::CsMat<T>) -> Array2<T>
