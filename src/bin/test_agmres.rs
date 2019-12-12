@@ -14,11 +14,16 @@ use ndarray::{array, ArrayView1};
 use num_complex::Complex;
 fn main() {
     let a = RawMM::<f64>::from_file("circuit_2.mtx").to_sparse();
-    let a=a.map(|&x| Complex::<f64>::from(x));
+    let a=a.map(|&x| 
+    //Complex::<f64>::from(x)
+    Complex::<f64>::new(x,x)
+    );
     //let a = RawMM::<f64>::from_file("bcsstk23.mtx").to_sparse();
 
     println!("{:?}", a.shape());
-    let x0 = Array1::<f64>::from(vec![1.0; a.cols()]).map(|&x| Complex::<f64>::from(x));
+    let x0 = Array1::<f64>::from(vec![1.0; a.cols()]).map(|&x| //Complex::<f64>::from(x)
+    Complex::<f64>::new(x,-x)
+    );
     let b = sp_mul_a1(&a, x0.view());
     println!("{:?}", b);
 
