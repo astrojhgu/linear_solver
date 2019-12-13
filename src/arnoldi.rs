@@ -5,7 +5,7 @@ use ndarray::{s, Array1, Array2, ArrayView1};
 use num_traits::Float;
 use std::marker::PhantomData;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ArnoldiErr {
     HMM1Zero,
     NoMoreBase,
@@ -13,7 +13,10 @@ pub enum ArnoldiErr {
 
 impl std::fmt::Display for ArnoldiErr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        write!(f, "H(m, m+1)=0")
+        match self {
+            ArnoldiErr::HMM1Zero => write!(f, "H(m, m+1)=0"),
+            ArnoldiErr::NoMoreBase => write!(f, "No more base"),
+        }
     }
 }
 

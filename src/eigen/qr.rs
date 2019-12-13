@@ -2,9 +2,8 @@
 #![allow(non_snake_case)]
 //use crate::qr::householder_reflection as qrdecomp;
 use crate::qr::householder_reflection as qrdecomp;
-use crate::utils::norm;
-use crate::utils::{ComplexOrReal, HasAbs, HasConj};
-use ndarray::{s, Array1, Array2, ArrayView2, ScalarOperand};
+use crate::utils::ComplexOrReal;
+use ndarray::{s, Array2, ArrayView2};
 use num_complex::Complex;
 use num_traits::Float;
 
@@ -21,50 +20,49 @@ impl std::fmt::Display for QREignErr {
 
 impl std::error::Error for QREignErr {}
 
-
 pub fn hessenberg_reduction<T>(A: ArrayView2<T>) -> Array2<T>
 where
-    T:Float + std::fmt::Debug,
+    T: Float + std::fmt::Debug,
 {
     let n = A.nrows();
     let mut A = A.to_owned();
- 
-    for m in 1..n-1{
-        let mut x=T::zero();
-        let mut i=m;
-        for j in m..n{
-            if A[(j, m-1)].abs()>x.abs(){
-                x=A[(j, m-1)];
-                i=j;
+
+    for m in 1..n - 1 {
+        let mut x = T::zero();
+        let mut i = m;
+        for j in m..n {
+            if A[(j, m - 1)].abs() > x.abs() {
+                x = A[(j, m - 1)];
+                i = j;
             }
         }
-        if i!=m{
-            for j in m-1..n{
-                A.swap((i,j),(m,j));
+        if i != m {
+            for j in m - 1..n {
+                A.swap((i, j), (m, j));
             }
-            for j in 0..n{
-                A.swap((j,i), (j,m));
+            for j in 0..n {
+                A.swap((j, i), (j, m));
             }
         }
-        if x!=T::zero(){
-            for i in m+1..n{
-                let mut y=A[(i,m-1)];
-                if y!=T::zero(){
-                    y=y/x;
-                    A[(i, m-1)]=y;
-                    for j in m..n{
-                        A[(i,j)]=A[(i,j)]-y*A[(m,j)];
+        if x != T::zero() {
+            for i in m + 1..n {
+                let mut y = A[(i, m - 1)];
+                if y != T::zero() {
+                    y = y / x;
+                    A[(i, m - 1)] = y;
+                    for j in m..n {
+                        A[(i, j)] = A[(i, j)] - y * A[(m, j)];
                     }
-                    for j in 0..n{
-                        A[(j,m)]=A[(j,m)]+y*A[(j,i)];
+                    for j in 0..n {
+                        A[(j, m)] = A[(j, m)] + y * A[(j, i)];
                     }
                 }
             }
         }
     }
 
-    for j in 2..A.nrows(){
-        A.slice_mut(s![j, ..j-1]).fill(T::zero());
+    for j in 2..A.nrows() {
+        A.slice_mut(s![j, ..j - 1]).fill(T::zero());
     }
     A
 }
@@ -78,7 +76,11 @@ where
     c - d.signum() * b.powi(2) / (d.abs() + (d.powi(2) + b.powi(2)).sqrt())
 }
 
-pub fn qr_iter_with_shift<T>(A: ArrayView2<T>, th: T, iter_max: usize) -> std::result::Result<Array2<T>, QREignErr>
+pub fn qr_iter_with_shift<T>(
+    A: ArrayView2<T>,
+    th: T,
+    iter_max: usize,
+) -> std::result::Result<Array2<T>, QREignErr>
 where
     T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
@@ -90,42 +92,43 @@ where
     let I = Array2::eye(n);
     let mut A = hessenberg_reduction(A);
     //let mut A=A.to_owned();
-    for i in 0..iter_max {
+    for _i in 0..iter_max {
         eprintln!("{:?}", A[(n - 1, n - 2)]);
         let mu = wilkinson_shift(A[(n - 2, n - 2)], A[(n - 1, n - 1)], A[(n - 2, n - 1)]);
         //let mu=T::zero();
         let (q, r) = qrdecomp((&A - &(&I * mu)).view());
         A = r.dot(&q) + &(&I * mu);
-        if A[(n - 1, n - 2)].abs() < th{
-            return Ok(A)
+        if A[(n - 1, n - 2)].abs() < th {
+            return Ok(A);
         }
     }
     Err(QREignErr::NotConverged)
 }
 
-pub fn eigvals<T>(A:ArrayView2<T>, th: T, iter_max: usize)->Result<Vec<Complex<T>>, QREignErr>
-where T: ComplexOrReal<T> + Float + std::fmt::Debug,
+pub fn eigvals<T>(A: ArrayView2<T>, th: T, iter_max: usize) -> Result<Vec<Complex<T>>, QREignErr>
+where
+    T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
-    if let Ok(a)=qr_iter_with_shift(A, th, iter_max){
-        let mut i=0;
-        let mut eig=Vec::new();
-        let n=A.nrows();
-        while i<n{
-            if i==n-1 || a[(i+1, i)]<th{
-                eig.push(Complex::from(a[(i,i)]));
-                i+=1;
-            }else{
-                let (l1,l2)=eigv2x2(a.slice(s![i..i+2, i..i+2]));
+    if let Ok(a) = qr_iter_with_shift(A, th, iter_max) {
+        let mut i = 0;
+        let mut eig = Vec::new();
+        let n = A.nrows();
+        while i < n {
+            if i == n - 1 || a[(i + 1, i)] < th {
+                eig.push(Complex::from(a[(i, i)]));
+                i += 1;
+            } else {
+                let (l1, l2) = eigv2x2(a.slice(s![i..i + 2, i..i + 2]));
                 eig.push(l1);
                 eig.push(l2);
-                i+=2;
+                i += 2;
             }
         }
-        if eig.len()<n{
-            eig.push(Complex::from(a[(n-1, n-1)]));
+        if eig.len() < n {
+            eig.push(Complex::from(a[(n - 1, n - 1)]));
         }
         Ok(eig)
-    }else{
+    } else {
         Err(QREignErr::NotConverged)
     }
 }
