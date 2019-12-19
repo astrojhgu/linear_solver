@@ -2,7 +2,7 @@
 use ndarray::{Array1, Array2, ArrayView1, ArrayView2, ScalarOperand};
 use num_traits::{Float, Num};
 use std::ops::Neg;
-
+use num_complex::Complex;
 pub trait ComplexOrReal<U: Float>:
     HasAbs<Output = U>
     + HasConj
@@ -13,6 +13,7 @@ pub trait ComplexOrReal<U: Float>:
     + Copy
     + Clone
     + Default
+    + Into<Complex<U>>
 {
 }
 
@@ -147,3 +148,45 @@ where
     }
     result
 }
+
+pub fn csign<T,U>(x: T)->T
+where T:ComplexOrReal<U>, 
+U: Float{
+    if x.abs()==U::zero(){
+        T::one()
+    }else{
+        x/x.abs().into()
+    }
+}
+
+pub fn hermit<T, U>(a: ArrayView2<T>)->Array2<T>
+where T:ComplexOrReal<U>,
+U: Float{
+    a.map(|&x| x.conj()).t().to_owned()
+}
+
+pub fn get_e1<T, U>(n: usize)->Array1<T>
+where T: ComplexOrReal<U>,
+U: Float,{
+    let mut e1=Array1::zeros(n);
+    e1[0]=T::one();
+    e1   
+}
+
+pub fn householder_matrix<T, U>(a: ArrayView1<T>)->Array2<T>
+where T: ComplexOrReal<U>,
+    U: Float,
+{
+    let two=T::one()+T::one();
+    let n=a.len();
+    let I=Array2::eye(n);
+    let e1=get_e1(n);
+    let norm_a:T=norm(a).into();
+    let v=e1*norm_a*csign(a[0])+a;
+    let v=&v/T::from(norm(v.view()));
+    let v:Array2<_>=v.into_shape((n, 1)).unwrap();
+    //let v_star=v.map(|&x|x.conj());
+    let v_star=hermit(v.view());
+    I-v.dot(&v_star)*two
+}
+

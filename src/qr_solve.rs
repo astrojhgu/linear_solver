@@ -1,6 +1,6 @@
 #![allow(clippy::many_single_char_names)]
 #![allow(non_snake_case)]
-use crate::qr::givens_rotation;
+use crate::qr::householder_reflection;
 use crate::utils::ComplexOrReal;
 use ndarray::{Array1, ArrayView1, ArrayView2};
 use num_traits::Float;
@@ -27,7 +27,7 @@ pub fn solve<T>(A: ArrayView2<T>, b: ArrayView1<T>) -> Array1<T>
 where
     T: ComplexOrReal<T> + Float + std::fmt::Debug,
 {
-    let (q, r) = givens_rotation(A);
+    let (q, r) = householder_reflection(A);
 
     let b1 = q.t().dot(&b);
 

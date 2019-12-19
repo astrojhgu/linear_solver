@@ -22,6 +22,7 @@ impl std::fmt::Display for ArnoldiErr {
 
 impl std::error::Error for ArnoldiErr {}
 
+#[derive(Clone)]
 pub struct ArnoldiSpace<T, U>
 where
     T: ComplexOrReal<U> + std::fmt::Debug,

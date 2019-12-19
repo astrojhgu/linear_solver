@@ -395,8 +395,12 @@ where
             }
         }
 
-        //println!("{:?}", indptr);
-        //println!("{:?}", indices);
+        while self.height+1!=indptr.len(){
+            indptr.push(*indptr.last().unwrap());
+        }
+
+        assert!(self.height+1==indptr.len());
+
         sprs::CsMat::new((self.height, self.width), indptr, indices, data)
     }
 
