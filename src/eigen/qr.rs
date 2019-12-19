@@ -236,12 +236,12 @@ U: Float,{
             if j2-j1==1 || j2-j1==2{
                 continue;
             }
-            println!("{} {}", j1, j2);
+            //println!("{} {}", j1, j2);
             //
             //let s=A[(j2-1, j2-1)];
             let mut s=vec![A[(j2-1, j2-1)]];
-            //let A1=qr_naive_iter(A.slice(s![j1..j2, j1..j2]), 100);
-            let A1=implicit_shifted_qr(A.slice(s![j1..j2, j1..j2]), &s);
+            let A1=qr_naive_iter(A.slice(s![j1..j2, j1..j2]), 10);
+            //let A1=implicit_shifted_qr(A.slice(s![j1..j2, j1..j2]), &s);
             A.slice_mut(s![j1..j2, j1..j2]).assign(&A1);
             cnt+=1;
         }
