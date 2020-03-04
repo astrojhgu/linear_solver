@@ -120,6 +120,7 @@ where
     IndStorage: std::ops::Deref<Target = [I]>,
     DataStorage: std::ops::Deref<Target = [T]>,
 {
+    assert_eq!(A.cols(),b.len());
     let mut result = Array1::from(vec![T::default(); A.rows()]);
     for (&x, (i, j)) in A.iter() {
         result[(i)] = result[(i)] + x * b[(j)];
