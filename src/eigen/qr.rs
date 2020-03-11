@@ -3,7 +3,7 @@
 //use crate::qr::householder_reflection as qrdecomp;
 use crate::qr::householder_reflection as qrdecomp;
 use crate::utils::ComplexOrReal;
-use crate::utils::{hermit,  householder_matrix, get_e1};
+use crate::utils::{get_e1, hermit, householder_matrix};
 use ndarray::{s, Array2, ArrayView2};
 use num_complex::Complex;
 use num_traits::Float;
@@ -21,21 +21,22 @@ impl std::fmt::Display for QREignErr {
 
 impl std::error::Error for QREignErr {}
 
-pub fn hessenberg<T, U>(A: ArrayView2<T>)->(Array2<T>, Array2<T>)
-where T: ComplexOrReal<U> + std::fmt::Debug,
-U: Float,
+pub fn hessenberg<T, U>(A: ArrayView2<T>) -> (Array2<T>, Array2<T>)
+where
+    T: ComplexOrReal<U> + std::fmt::Debug,
+    U: Float,
 {
-    let n=A.nrows();
-    let mut A=A.to_owned();
-    let mut Q=Array2::eye(n);
-    for j in 1..=n-2{
-        let U=householder_matrix(A.slice(s![j.., j-1]));
-        let A1=A.slice(s![j.., j-1..]).to_owned();
-        let U_star=hermit(U.view());
-        A.slice_mut(s![j.., j-1..]).assign(&U_star.dot(&A1));
-        let A1=A.slice(s![.., j..]).to_owned();
+    let n = A.nrows();
+    let mut A = A.to_owned();
+    let mut Q = Array2::eye(n);
+    for j in 1..=n - 2 {
+        let U = householder_matrix(A.slice(s![j.., j - 1]));
+        let A1 = A.slice(s![j.., j - 1..]).to_owned();
+        let U_star = hermit(U.view());
+        A.slice_mut(s![j.., j - 1..]).assign(&U_star.dot(&A1));
+        let A1 = A.slice(s![.., j..]).to_owned();
         A.slice_mut(s![.., j..]).assign(&A1.dot(&U));
-        let Q1=Q.slice(s![.., j..]).to_owned();
+        let Q1 = Q.slice(s![.., j..]).to_owned();
         Q.slice_mut(s![.., j..]).assign(&Q1.dot(&U));
     }
     for j in 2..A.nrows() {
@@ -44,26 +45,26 @@ U: Float,
     (A, Q)
 }
 
-
-pub fn implicit_shifted_qr<T, U>(A: ArrayView2<T>, shifts: &[T])->Array2<T>
-where T: ComplexOrReal<U> + std::fmt::Debug,
-U: Float,
+pub fn implicit_shifted_qr<T, U>(A: ArrayView2<T>, shifts: &[T]) -> Array2<T>
+where
+    T: ComplexOrReal<U> + std::fmt::Debug,
+    U: Float,
 {
     //algorithm 4 of HLA on 43-6
-    let n=A.nrows();
-    let k=shifts.len();
-    let mut A=A.to_owned();
-    let mut x=get_e1::<T, U>(n);
-    let I=Array2::eye(n);
-    
-    for &mu in shifts{
-        x=(&A-&(&I*mu)).dot(&x);
+    let n = A.nrows();
+    let k = shifts.len();
+    let mut A = A.to_owned();
+    let mut x = get_e1::<T, U>(n);
+    let I = Array2::eye(n);
+
+    for &mu in shifts {
+        x = (&A - &(&I * mu)).dot(&x);
     }
-    let U_star=householder_matrix(x.slice(s![..=k]));
-    let U=hermit(U_star.view());
-    let A1=A.slice(s![..=k, ..]).to_owned();
+    let U_star = householder_matrix(x.slice(s![..=k]));
+    let U = hermit(U_star.view());
+    let A1 = A.slice(s![..=k, ..]).to_owned();
     A.slice_mut(s![..=k, ..]).assign(&U_star.dot(&A1));
-    let A1=A.slice(s![.., ..=k]).to_owned();
+    let A1 = A.slice(s![.., ..=k]).to_owned();
     A.slice_mut(s![.., ..=k]).assign(&A1.dot(&U));
     hessenberg(A.view()).0
 }
@@ -124,16 +125,15 @@ where
     c - d.signum() * b.powi(2) / (d.abs() + (d.powi(2) + b.powi(2)).sqrt())
 }
 
-
-pub fn eigv2x2<T,U>(A: ArrayView2<T>) -> (Complex<U>, Complex<U>)
+pub fn eigv2x2<T, U>(A: ArrayView2<T>) -> (Complex<U>, Complex<U>)
 where
     T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float,
 {
-    let a:Complex<U>=A[(0, 0)].into();
-    let b:Complex::<U>=A[(0, 1)].into();
-    let c:Complex::<U>=A[(1, 0)].into();
-    let d:Complex::<U>=A[(1, 1)].into();
+    let a: Complex<U> = A[(0, 0)].into();
+    let b: Complex<U> = A[(0, 1)].into();
+    let c: Complex<U> = A[(1, 0)].into();
+    let d: Complex<U> = A[(1, 1)].into();
     let t = a + d;
     let D = a * d - b * c;
     let ONE = T::one();
@@ -145,7 +145,7 @@ where
     (L1, L2)
 }
 
-pub fn qr_naive_iter<T,U>(A: ArrayView2<T>, niter: usize) -> Array2<T>
+pub fn qr_naive_iter<T, U>(A: ArrayView2<T>, niter: usize) -> Array2<T>
 where
     T: ComplexOrReal<U> + std::fmt::Debug,
     U: Float,
@@ -210,67 +210,69 @@ where
     c - b.powi(2) / (Complex::from(d.norm()) + (d.powi(2) + b.powi(2)).sqrt())
 }
 
-pub fn qr_naive_eigvals<T,U>(A:ArrayView2<T>, tol: U)->Vec<Complex<U>>
-where T: ComplexOrReal<U> + std::fmt::Debug,
-U: Float,{
-    let n=A.nrows();
+pub fn qr_naive_eigvals<T, U>(A: ArrayView2<T>, tol: U) -> Vec<Complex<U>>
+where
+    T: ComplexOrReal<U> + std::fmt::Debug,
+    U: Float,
+{
+    let n = A.nrows();
     //let mut A=A.to_owned();
-    let (mut A, _)=hessenberg(A);
+    let (mut A, _) = hessenberg(A);
 
-    loop{
-        let mut splits=vec![0];
-        for j in 0..n-1{
-            if A[(j+1, j)].abs()<tol*(A[(j,j)].abs()+A[(j+1, j+1)].abs()){
-                splits.push(j+1);
-                A[(j+1, j)]=U::zero().into();
+    loop {
+        let mut splits = vec![0];
+        for j in 0..n - 1 {
+            if A[(j + 1, j)].abs() < tol * (A[(j, j)].abs() + A[(j + 1, j + 1)].abs()) {
+                splits.push(j + 1);
+                A[(j + 1, j)] = U::zero().into();
             }
         }
-        if splits[splits.len()-1]!=n{
+        if splits[splits.len() - 1] != n {
             splits.push(n);
         }
 
-        let mut cnt=0;
-        for b in splits.windows(2){
-            let j1=b[0];
-            let j2=b[1];
-            if j2-j1==1 || j2-j1==2{
+        let mut cnt = 0;
+        for b in splits.windows(2) {
+            let j1 = b[0];
+            let j2 = b[1];
+            if j2 - j1 == 1 || j2 - j1 == 2 {
                 continue;
             }
             //println!("{} {}", j1, j2);
             //
             //let s=A[(j2-1, j2-1)];
-            let mut s=vec![A[(j2-1, j2-1)]];
-            let A1=qr_naive_iter(A.slice(s![j1..j2, j1..j2]), 10);
+            //let mut s=vec![A[(j2-1, j2-1)]];
+            let A1 = qr_naive_iter(A.slice(s![j1..j2, j1..j2]), 10);
             //let A1=implicit_shifted_qr(A.slice(s![j1..j2, j1..j2]), &s);
             A.slice_mut(s![j1..j2, j1..j2]).assign(&A1);
-            cnt+=1;
+            cnt += 1;
         }
-        if cnt==0{
+        if cnt == 0 {
             break;
         }
     }
 
-    let mut splits=vec![0];
-    for j in 0..n-1{
-        if A[(j+1, j)].abs()<tol*(A[(j,j)].abs()+A[(j+1, j+1)].abs()){
-            splits.push(j+1);
-            A[(j+1, j)]=U::zero().into();
+    let mut splits = vec![0];
+    for j in 0..n - 1 {
+        if A[(j + 1, j)].abs() < tol * (A[(j, j)].abs() + A[(j + 1, j + 1)].abs()) {
+            splits.push(j + 1);
+            A[(j + 1, j)] = U::zero().into();
         }
     }
-    if splits[splits.len()-1]!=n{
+    if splits[splits.len() - 1] != n {
         splits.push(n);
     }
-    let mut results=Vec::new();
-    for b in splits.windows(2){
-        let j1=b[0];
-        let j2=b[1];
-        if j2-j1==1{
-            results.push(A[(j1,j1)].into());
-        }else if j2-j1==2{
-            let (L1,L2)=eigv2x2(A.slice(s![j1..j2, j1..j2]));
+    let mut results = Vec::new();
+    for b in splits.windows(2) {
+        let j1 = b[0];
+        let j2 = b[1];
+        if j2 - j1 == 1 {
+            results.push(A[(j1, j1)].into());
+        } else if j2 - j1 == 2 {
+            let (L1, L2) = eigv2x2(A.slice(s![j1..j2, j1..j2]));
             results.push(L1);
             results.push(L2);
-        }else{
+        } else {
             panic!("should never reach here");
         }
     }

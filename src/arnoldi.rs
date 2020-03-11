@@ -91,43 +91,33 @@ where
         let mut result = Array2::zeros([n, n]);
         for (i, h) in self.H.iter().enumerate() {
             //result.column_mut(i).slice(s![]).assign(h);
-            let i1=if i == n -1{
-                n - 1 
-            }else{
-                i + 1
-            };
+            let i1 = if i == n - 1 { n - 1 } else { i + 1 };
             result.slice_mut(s![..=i1, i]).assign(&h.slice(s![0..=i1]));
         }
         result
     }
 
-
-    pub fn put_H(&mut self, H: ArrayView2<T>){
+    pub fn put_H(&mut self, H: ArrayView2<T>) {
         let n = self.H.len();
         for (i, h) in self.H.iter_mut().enumerate() {
-            let i1=if i == n -1{
-                n - 1 
-            }else{
-                i + 1
-            };
+            let i1 = if i == n - 1 { n - 1 } else { i + 1 };
             h.slice_mut(s![0..=i1]).assign(&H.slice(s![..=i1, i]));
         }
     }
 
-
     pub fn get_H_star(&self) -> Array2<T> {
         let n = self.H.len();
-        let mut result = Array2::zeros([n+1, n]);
+        let mut result = Array2::zeros([n + 1, n]);
         for (i, h) in self.H.iter().enumerate() {
             //result.column_mut(i).slice(s![]).assign(h);
-            result.slice_mut(s![0..i+2, i]).assign(h);
+            result.slice_mut(s![0..i + 2, i]).assign(h);
         }
         result
     }
 
     pub fn get_Q(&self) -> Array2<T> {
         let n = self.H.len();
-        let mut result = Array2::zeros([self.Q[0].len(), n ]);
+        let mut result = Array2::zeros([self.Q[0].len(), n]);
 
         for (i, q) in self.Q.iter().take(n).enumerate() {
             result.slice_mut(s![.., i]).assign(q);
@@ -145,7 +135,7 @@ where
 
     pub fn get_Q_star(&self) -> Array2<T> {
         let n = self.H.len();
-        let mut result = Array2::zeros([self.Q[0].len(), n + 1 ]);
+        let mut result = Array2::zeros([self.Q[0].len(), n + 1]);
 
         for (i, q) in self.Q.iter().enumerate() {
             result.slice_mut(s![.., i]).assign(q);
@@ -153,18 +143,18 @@ where
         result
     }
 
-    pub fn get_f(&self) -> Array1<T>{
+    pub fn get_f(&self) -> Array1<T> {
         let n = self.H.len();
-        let f = self.H[n-1][n];
+        let f = self.H[n - 1][n];
         let v = self.Q.last().unwrap().clone();
-        v*f
+        v * f
     }
 
-    pub fn put_f(&mut self, f: ArrayView1<T>){
-        let n=self.H.len();
-        let nn=norm(f);
-        let v=&f/T::from(nn);
+    pub fn put_f(&mut self, f: ArrayView1<T>) {
+        let n = self.H.len();
+        let nn = norm(f);
+        let v = &f / T::from(nn);
         self.Q.last_mut().unwrap().assign(&v);
-        self.H[n-1][n]=nn.into();
+        self.H[n - 1][n] = nn.into();
     }
 }
