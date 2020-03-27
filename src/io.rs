@@ -420,17 +420,23 @@ where
     }
 
     pub fn to_array1(&self) -> ndarray::Array1<T> {
-        assert!(self.width == 1);
+        assert!(self.width == 1 || self.height == 1);
         let entries: Vec<_> = self
             .entries
             .iter()
             .map(|x| self.qual.expand_items(x))
             .flatten()
             .collect();
-
-        let mut result = Array1::zeros(self.height);
-        for RawEntry { i, value: v, .. } in entries {
-            result[i] = v;
+        let size=if self.width==1{self.height}else{self.width};
+        let mut result = Array1::zeros(size);
+        if self.width==1{
+            for RawEntry { i, value: v, .. } in entries {
+                result[i] = v;
+            }    
+        }else{
+            for RawEntry { j, value: v, .. } in entries {
+                result[j] = v;
+            }
         }
 
         result
